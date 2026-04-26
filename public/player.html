@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tax Wars</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0d0d0d;color:#f0f0f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
+button{border:none;cursor:pointer;font-family:inherit}
+input{font-family:inherit;color:#f0f0f0}
+
+/* ── screens ── */
+.screen{display:none;flex-direction:column;height:100vh;overflow:hidden}
+.screen.active{display:flex}
+
+/* ── shared components ── */
+.btn-primary{background:#a855f7;color:#fff;padding:16px;border-radius:14px;font-size:16px;font-weight:700;width:100%;transition:opacity .2s}
+.btn-primary:active{opacity:.8}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed}
+.card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:16px;padding:18px}
+.label-small{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#666}
+.positive{color:#22c55e} .negative{color:#ef4444} .neutral{color:#888}
+
+/* ── JOIN ── */
+#s-join{align-items:center;justify-content:center;gap:28px;padding:32px 24px;
+  background:radial-gradient(ellipse at 50% 0%,#1a0d2e 0%,#0d0d0d 70%)}
+.join-logo{font-size:52px;text-align:center}
+.join-title{font-size:28px;font-weight:900;text-align:center}
+.join-sub{font-size:14px;color:#888;text-align:center}
+.join-form{width:100%;max-width:320px;display:flex;flex-direction:column;gap:12px}
+.code-input{background:#1a1a1a;border:1.5px solid #2a2a2a;padding:16px;border-radius:14px;
+  font-size:22px;font-weight:800;letter-spacing:.2em;text-align:center;text-transform:uppercase;
+  outline:none;transition:border-color .2s;width:100%}
+.code-input:focus{border-color:#a855f7}
+.code-input::placeholder{color:#444;font-size:15px;font-weight:400;letter-spacing:.05em}
+#join-error{color:#ef4444;font-size:13px;text-align:center;min-height:20px}
+
+/* ── LOBBY ── */
+#s-lobby{padding:32px 20px 20px;gap:16px}
+#s-lobby h2{font-size:20px;font-weight:800;text-align:center}
+#s-lobby p{font-size:13px;color:#888;text-align:center}
+.code-display{text-align:center;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:14px;padding:14px}
+.code-display-val{font-size:30px;font-weight:900;color:#a855f7;letter-spacing:.2em}
+.slot{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#1a1a1a;
+  border:1px solid #2a2a2a;border-radius:12px}
+.slot-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-on{background:#22c55e} .dot-off{background:#333}
+.slot-emoji{font-size:22px;width:30px;text-align:center}
+.slot-name{font-size:13px;font-weight:700} .slot-job{font-size:11px;color:#666}
+.players-list{display:flex;flex-direction:column;gap:8px;flex:1;overflow-y:auto}
+
+/* ── CHARACTER REVEAL ── */
+#s-char{align-items:center;justify-content:center;gap:16px;padding:32px 24px;text-align:center}
+#s-char .lbl{font-size:12px;color:#888;letter-spacing:.1em;text-transform:uppercase}
+#cr-emoji{font-size:80px;animation:pop .4s ease}
+@keyframes pop{0%{transform:scale(.4);opacity:0}80%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+#cr-name{font-size:30px;font-weight:900}
+#cr-job{font-size:14px;color:#888}
+.char-budget-box{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:14px;padding:16px;width:100%;max-width:300px}
+.char-budget-box .lbl{margin-bottom:4px}
+.char-budget-val{font-size:26px;font-weight:900}
+#cr-tagline{font-size:13px;color:#888;max-width:280px;line-height:1.5}
+#cr-tax-note{font-size:12px;color:#aaa;max-width:280px;line-height:1.5;padding:12px;
+  background:#111;border-radius:10px;border-left:3px solid #a855f7}
+
+/* ── APP (investing) ── */
+#s-app{background:#0d0d0d}
+.app-header{padding:16px 20px 0;background:linear-gradient(180deg,#141414,#0d0d0d)}
+.app-header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.char-badge{display:flex;align-items:center;gap:8px}
+.char-badge-emoji{font-size:20px}
+.char-badge-name{font-size:14px;font-weight:700}
+.round-badge{background:#1a1a1a;border:1px solid #2a2a2a;padding:4px 12px;border-radius:20px;font-size:12px;color:#888}
+.wealth-block{padding:4px 0 12px}
+.wealth-lbl{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.08em}
+.wealth-val{font-size:34px;font-weight:900;letter-spacing:-.02em}
+.cash-badge{display:inline-flex;align-items:center;gap:6px;background:#1a1a1a;border:1px solid #2a2a2a;
+  padding:5px 12px;border-radius:20px;font-size:12px}
+.cash-badge-lbl{color:#888} .cash-badge-val{font-weight:700;color:#22c55e}
+
+/* tabs */
+.tabs{display:flex;border-bottom:1px solid #1f1f1f;background:#0d0d0d}
+.tab{flex:1;padding:12px 0;font-size:13px;font-weight:600;color:#666;background:none;
+  border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.tab.active{color:#f0f0f0;border-bottom-color:#a855f7}
+.tab-content{flex:1;overflow-y:auto}
+.pane{display:none;padding-bottom:16px}
+.pane.active{display:block}
+.sec-lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:#555;padding:10px 20px 6px}
+
+/* asset rows */
+.asset-row{display:flex;align-items:center;gap:12px;padding:11px 20px;
+  border-bottom:1px solid #151515;cursor:pointer;transition:background .1s;-webkit-tap-highlight-color:transparent}
+.asset-row:active{background:#151515}
+.a-emoji{font-size:22px;width:34px;text-align:center}
+.a-info{flex:1;min-width:0}
+.a-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.a-meta{font-size:11px;color:#555;margin-top:2px}
+.a-tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px}
+.tag-stock{background:#1a2535;color:#4f8ef7}
+.tag-bond{background:#1a2a1a;color:#22c55e}
+.tag-etf{background:#251a35;color:#a855f7}
+.a-right{text-align:right;min-width:54px}
+.a-ret{font-size:14px;font-weight:700}
+.a-ret.hidden-ret{color:#333;font-size:11px}
+.a-invested{font-size:11px;color:#555;margin-top:2px}
+.btn-buy{background:#0a2a0a;color:#22c55e;border:1px solid #22c55e30;padding:7px 14px;border-radius:10px;font-size:12px;font-weight:700}
+.btn-sell{background:#2a0a0a;color:#ef4444;border:1px solid #ef444430;padding:7px 14px;border-radius:10px;font-size:12px;font-weight:700}
+
+/* portfolio tab */
+.empty-state{padding:40px 20px;text-align:center;color:#444;font-size:14px;line-height:1.6}
+.port-row{display:flex;align-items:center;gap:12px;padding:13px 20px;border-bottom:1px solid #151515}
+.port-info{flex:1} .port-name{font-size:14px;font-weight:600} .port-sub{font-size:11px;color:#555;margin-top:2px}
+.port-right{text-align:right} .port-val{font-size:14px;font-weight:700} .port-gain{font-size:11px;margin-top:2px}
+
+/* tax tab */
+.tax-section{margin:12px 20px 0}
+.tax-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #1f1f1f}
+.tax-row:last-child{border-bottom:none}
+.tax-row-lbl{font-size:13px;color:#888} .tax-row-val{font-size:14px;font-weight:700}
+.tax-highlight{background:#130808;border:1.5px solid #ef444425;border-radius:12px;padding:16px;margin-top:14px}
+.tax-h-lbl{font-size:10px;color:#ef4444;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.tax-h-val{font-size:26px;font-weight:900;color:#ef4444}
+.tax-zero-highlight{background:#081308;border:1.5px solid #22c55e25;border-radius:12px;padding:16px;margin-top:14px}
+.tax-zero-lbl{font-size:10px;color:#22c55e;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.tax-zero-val{font-size:26px;font-weight:900;color:#22c55e}
+.tax-note{font-size:12px;color:#666;line-height:1.5;margin-top:10px}
+
+/* submit bar */
+.submit-bar{padding:14px 20px;background:#0d0d0d;border-top:1px solid #1f1f1f}
+.btn-submit{width:100%;background:#22c55e;color:#000;padding:15px;border-radius:14px;font-size:16px;font-weight:800}
+.btn-submit:disabled{background:#0f2b0f;color:#22c55e40;cursor:not-allowed}
+
+/* ── WAITING ── */
+#s-wait{align-items:center;justify-content:center;gap:20px;text-align:center;padding:32px}
+.spinner{width:44px;height:44px;border:3px solid #1f1f1f;border-top-color:#a855f7;
+  border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#wait-count{background:#1a1a1a;border:1px solid #2a2a2a;padding:10px 24px;border-radius:20px;
+  font-size:14px;font-weight:700;color:#a855f7}
+
+/* ── RESULTS ── */
+#s-results{overflow-y:auto}
+.res-header{padding:28px 20px 14px;text-align:center}
+.res-rnd-lbl{font-size:11px;color:#888;letter-spacing:.1em;text-transform:uppercase}
+.res-title{font-size:24px;font-weight:900;margin-top:4px}
+.res-card{margin:0 20px 14px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:16px;overflow:hidden}
+.res-row{display:flex;justify-content:space-between;align-items:center;padding:13px 18px;border-bottom:1px solid #1f1f1f}
+.res-row:last-child{border-bottom:none}
+.res-row-lbl{font-size:13px;color:#888} .res-row-val{font-size:14px;font-weight:700}
+.prices-section{padding:0 20px 14px}
+.prices-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#555;margin-bottom:8px}
+.price-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #151515}
+.price-row:last-child{border-bottom:none}
+.p-emoji{font-size:18px;width:26px;text-align:center}
+.p-name{font-size:13px;font-weight:600;flex:1}
+.p-pct{font-size:14px;font-weight:800}
+.tax-callout{margin:0 20px 14px;padding:18px;background:#130808;border:1.5px solid #ef444420;border-radius:14px}
+.tc-lbl{font-size:10px;color:#ef4444;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.tc-val{font-size:26px;font-weight:900;color:#ef4444}
+.tc-note{font-size:12px;color:#888;margin-top:6px;line-height:1.5}
+.zero-callout{margin:0 20px 14px;padding:18px;background:#081308;border:1.5px solid #22c55e20;border-radius:14px}
+.zc-lbl{font-size:10px;color:#22c55e;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.zc-val{font-size:26px;font-weight:900;color:#22c55e}
+.res-btn{margin:0 20px 32px}
+
+/* ── GAME OVER ── */
+#s-gameover{overflow-y:auto}
+.go-header{padding:36px 20px 20px;text-align:center}
+.go-emoji{font-size:52px;margin-bottom:10px}
+.go-title{font-size:26px;font-weight:900}
+.go-sub{font-size:13px;color:#888;margin-top:4px}
+.lb{padding:0 20px 40px;display:flex;flex-direction:column;gap:10px}
+.lb-row{background:#1a1a1a;border:1.5px solid #2a2a2a;border-radius:14px;
+  padding:14px 16px;display:flex;align-items:center;gap:12px}
+.lb-row.r1{border-color:#eab30840;background:#131100}
+.lb-rank{font-size:18px;font-weight:900;color:#555;width:26px}
+.lb-emoji{font-size:26px}
+.lb-info{flex:1} .lb-name{font-size:14px;font-weight:700} .lb-job{font-size:11px;color:#555}
+.lb-money{text-align:right} .lb-wealth{font-size:15px;font-weight:800} .lb-tax{font-size:11px;margin-top:2px}
+
+/* ── TRADE MODAL ── */
+.overlay{position:fixed;inset:0;background:#0009;z-index:100;display:none;align-items:flex-end}
+.overlay.open{display:flex}
+.sheet{width:100%;background:#1c1c1c;border-radius:22px 22px 0 0;padding:18px 22px 40px;animation:up .22s ease}
+@keyframes up{from{transform:translateY(100%)}}
+.sheet-handle{width:38px;height:4px;background:#333;border-radius:2px;margin:0 auto 18px}
+.sheet-title{font-size:18px;font-weight:800;margin-bottom:3px}
+.sheet-sub{font-size:13px;color:#888;margin-bottom:18px}
+.bal-row{display:flex;justify-content:space-between;margin-bottom:18px;
+  padding:12px 14px;background:#111;border-radius:12px}
+.bal-lbl{font-size:11px;color:#888;margin-bottom:2px} .bal-val{font-size:14px;font-weight:700}
+.amt-wrap{position:relative;margin-bottom:8px}
+.amt-prefix{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;font-weight:700;color:#555}
+.amt-input{width:100%;background:#111;border:1.5px solid #2a2a2a;padding:15px 15px 15px 34px;
+  border-radius:14px;font-size:22px;font-weight:700;outline:none;transition:border-color .2s}
+.amt-input:focus{border-color:#a855f7}
+.quick{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.quick-btn{background:#111;border:1px solid #2a2a2a;color:#aaa;padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600}
+.tax-preview{background:#130808;border:1px solid #ef444420;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:none}
+.tp-lbl{font-size:10px;color:#ef4444;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.tp-val{font-size:18px;font-weight:800;color:#ef4444}
+.tp-detail{font-size:11px;color:#666;margin-top:2px}
+.modal-btns{display:flex;gap:10px}
+.btn-cancel{background:#111;border:1px solid #2a2a2a;color:#888;padding:15px 18px;border-radius:12px;font-size:14px;font-weight:700}
+.btn-confirm{flex:1;padding:15px;border-radius:12px;font-size:15px;font-weight:800}
+.btn-confirm.buy-mode{background:#22c55e;color:#000}
+.btn-confirm.sell-mode{background:#ef4444;color:#fff}
+.btn-confirm:disabled{opacity:.35;cursor:not-allowed}
+
+/* ── BANK APP THEME OVERRIDE (white + green) ── */
+html,body{
+  background:#f4f7f5 !important;
+  color:#153226 !important;
+}
+input{color:#153226 !important}
+.screen{background:#f4f7f5 !important}
+
+.card,.code-display,.slot,.char-budget-box,.res-card,.lb-row,.sheet,
+.round-badge,.cash-badge,#wait-count,.tax-section,.bal-row,.amt-input,.quick-btn,.btn-cancel{
+  background:#ffffff !important;
+  border-color:#d7e6dc !important;
+  color:#153226 !important;
+}
+
+.label-small,.slot-job,.wealth-lbl,.sec-lbl,.a-meta,.a-invested,.port-sub,.tax-note,
+.res-rnd-lbl,.res-row-lbl,.prices-lbl,.go-sub,.lb-job,.sheet-sub,.bal-lbl,.tp-detail,
+.cash-badge-lbl,.join-sub,#cr-job,#cr-tagline{
+  color:#5e7b6b !important;
+}
+
+.btn-primary,#btn-join,#btn-ready,#btn-next{
+  background:#0f9d58 !important;
+  color:#ffffff !important;
+}
+.btn-submit,.btn-buy,.btn-confirm.buy-mode{
+  background:#16a34a !important;
+  color:#ffffff !important;
+  border-color:#16a34a !important;
+}
+.btn-submit:disabled{
+  background:#d4eadb !important;
+  color:#7ab791 !important;
+}
+.btn-sell,.btn-confirm.sell-mode{
+  background:#fff5f5 !important;
+  color:#dc2626 !important;
+  border-color:#fecaca !important;
+}
+
+#s-join{
+  background:radial-gradient(ellipse at 50% 0%,#e6f7ec 0%,#f4f7f5 72%) !important;
+}
+#s-app,.tabs,.submit-bar{
+  background:#f4f7f5 !important;
+}
+.app-header{
+  background:linear-gradient(180deg,#ecf8f1,#f4f7f5) !important;
+}
+.tabs{border-bottom:1px solid #d7e6dc !important}
+.tab{
+  color:#5e7b6b !important;
+  border-bottom-color:transparent !important;
+}
+.tab.active{
+  color:#0f9d58 !important;
+  border-bottom-color:#16a34a !important;
+}
+
+.code-input,.amt-input{
+  background:#ffffff !important;
+  border-color:#c7decf !important;
+}
+.code-input:focus,.amt-input:focus{
+  border-color:#16a34a !important;
+}
+.code-display-val,.cash-badge-val,.positive{
+  color:#16a34a !important;
+}
+
+.asset-row,.port-row,.price-row,.res-row,.tax-row{
+  border-bottom-color:#ebf2ee !important;
+}
+.asset-row:active{background:#f3faf6 !important}
+.a-ret.hidden-ret,.empty-state,.lb-rank{color:#97afa0 !important}
+
+.tag-stock{background:#e7f1ff !important;color:#2563eb !important}
+.tag-bond{background:#e8f9ee !important;color:#16a34a !important}
+.tag-etf{background:#e8f7ee !important;color:#0f9d58 !important}
+
+.tax-highlight,.tax-callout,.tax-preview{
+  background:#fff5f5 !important;
+  border-color:#fecaca !important;
+}
+.tax-zero-highlight,.zero-callout{
+  background:#f0fdf4 !important;
+  border-color:#bbf7d0 !important;
+}
+#cr-tax-note{
+  background:#ecf8f1 !important;
+  border-left-color:#16a34a !important;
+  color:#345646 !important;
+}
+.spinner{
+  border-color:#d7e6dc !important;
+  border-top-color:#16a34a !important;
+}
+
+.overlay{background:#00000055 !important}
+.sheet-handle{background:#b6cfc0 !important}
+
+/* ── PROFESSIONAL POLISH LAYER ── */
+:root{
+  --bg:#f3f6f4;
+  --surface:#ffffff;
+  --surface-soft:#f8fbf9;
+  --line:#d6e2dc;
+  --line-soft:#e7efea;
+  --text:#10281d;
+  --muted:#5f796c;
+  --brand:#0f8f4e;
+  --brand-strong:#0b7a42;
+}
+
+html,body{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important}
+.screen{background:var(--bg) !important}
+
+.card,.code-display,.slot,.char-budget-box,.res-card,.lb-row,.sheet,.round-badge,.cash-badge,#wait-count,
+.tax-section,.bal-row,.amt-input,.quick-btn,.btn-cancel,.tax-highlight,.tax-zero-highlight,.tax-callout,.zero-callout{
+  border-radius:12px !important;
+  border:1px solid var(--line) !important;
+  box-shadow:0 1px 2px rgba(16,40,29,.04) !important;
+}
+
+.app-header{
+  border-bottom:1px solid var(--line-soft) !important;
+  box-shadow:0 1px 0 rgba(16,40,29,.03) !important;
+}
+
+.join-title,.go-title,.res-title{letter-spacing:-.02em !important}
+.wealth-val{font-size:32px !important;font-weight:800 !important}
+.char-badge-name,.a-name,.port-name,.lb-name{font-weight:650 !important}
+
+.btn-primary,.btn-submit,.btn-buy,.btn-confirm.buy-mode{
+  background:var(--brand) !important;
+  color:#fff !important;
+  border:1px solid var(--brand) !important;
+  border-radius:10px !important;
+  font-weight:700 !important;
+}
+.btn-primary:hover,.btn-submit:hover,.btn-buy:hover,.btn-confirm.buy-mode:hover{
+  background:var(--brand-strong) !important;
+  border-color:var(--brand-strong) !important;
+}
+.btn-sell,.btn-confirm.sell-mode{
+  border-radius:10px !important;
+  font-weight:700 !important;
+}
+
+.tabs{
+  background:var(--surface) !important;
+  position:sticky;
+  top:0;
+  z-index:3;
+}
+.tab{
+  font-weight:650 !important;
+  padding:14px 0 !important;
+}
+.tab.active{
+  color:var(--brand) !important;
+  border-bottom-width:3px !important;
+}
+
+.asset-row,.port-row,.price-row,.res-row,.tax-row{
+  background:transparent !important;
+  border-bottom:1px solid var(--line-soft) !important;
+}
+.asset-row:hover{background:var(--surface-soft) !important}
+.asset-row:active{background:#edf6f1 !important}
+
+.submit-bar{
+  background:var(--surface) !important;
+  border-top:1px solid var(--line) !important;
+}
+.tax-note,.tc-note,.tp-detail{line-height:1.45 !important}
+</style>
+</head>
+<body>
+
+<!-- JOIN -->
+<div class="screen active" id="s-join">
+  <div class="join-logo">💰</div>
+  <div><div class="join-title">Tax Wars</div><div class="join-sub">Capital gains tax simulation</div></div>
+  <div class="join-form">
+    <input class="code-input" id="inp-code" maxlength="5" placeholder="Enter game code" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <div id="join-error"></div>
+    <button class="btn-primary" id="btn-join">Join Game</button>
+  </div>
+</div>
+
+<!-- LOBBY -->
+<div class="screen" id="s-lobby">
+  <div style="padding:28px 20px 0;text-align:center">
+    <h2>Waiting for players…</h2>
+    <p style="margin-top:4px">Show this code on the board</p>
+  </div>
+  <div class="code-display" style="margin:14px 20px 0">
+    <div class="label-small" style="margin-bottom:4px">Game Code</div>
+    <div class="code-display-val" id="lb-code">—</div>
+  </div>
+  <div style="padding:14px 20px 0;font-size:11px;color:#666;font-weight:700;text-transform:uppercase;letter-spacing:.1em">Players</div>
+  <div class="players-list" style="padding:0 20px 20px;margin-top:8px" id="players-list"></div>
+</div>
+
+<!-- CHARACTER REVEAL -->
+<div class="screen" id="s-char">
+  <div class="lbl">You are playing as</div>
+  <div id="cr-emoji">🧍</div>
+  <div id="cr-name" style="font-size:30px;font-weight:900">—</div>
+  <div id="cr-job" style="font-size:14px;color:#888">—</div>
+  <div class="char-budget-box">
+    <div class="lbl label-small">Starting budget</div>
+    <div class="char-budget-val" id="cr-budget">—</div>
+  </div>
+  <div id="cr-tagline"></div>
+  <div id="cr-tax-note"></div>
+  <button class="btn-primary" id="btn-ready" style="max-width:300px">I'm Ready ✓</button>
+</div>
+
+<!-- INVESTING APP -->
+<div class="screen" id="s-app">
+  <div class="app-header">
+    <div class="app-header-top">
+      <div class="char-badge">
+        <span class="char-badge-emoji" id="app-emoji">🧍</span>
+        <span class="char-badge-name" id="app-name">—</span>
+      </div>
+      <span class="round-badge" id="app-round">Round 1/3</span>
+    </div>
+    <div class="wealth-block">
+      <div class="wealth-lbl">Total Wealth</div>
+      <div class="wealth-val" id="app-wealth">—</div>
+      <div style="margin-top:6px">
+        <span class="cash-badge">
+          <span class="cash-badge-lbl">Cash:</span>
+          <span class="cash-badge-val" id="app-cash">—</span>
+        </span>
+      </div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="markets">Markets</button>
+    <button class="tab" data-tab="portfolio">Portfolio</button>
+    <button class="tab" data-tab="tax">Tax</button>
+  </div>
+  <div class="tab-content">
+    <div class="pane active" id="pane-markets">
+      <div class="sec-lbl">📈 Stocks</div><div id="list-stock"></div>
+      <div class="sec-lbl">🏛️ Bonds</div><div id="list-bond"></div>
+      <div class="sec-lbl">📊 ETFs</div><div id="list-etf"></div>
+    </div>
+    <div class="pane" id="pane-portfolio"><div id="port-content"></div></div>
+    <div class="pane" id="pane-tax"><div id="tax-content"></div></div>
+  </div>
+  <div class="submit-bar">
+    <button class="btn-submit" id="btn-submit" disabled>Confirm Investments</button>
+  </div>
+</div>
+
+<!-- WAITING -->
+<div class="screen" id="s-wait">
+  <div class="spinner"></div>
+  <div style="font-size:20px;font-weight:800">Submitted!</div>
+  <div style="font-size:14px;color:#888">Waiting for other players…</div>
+  <div id="wait-count">0 / 6 submitted</div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen" id="s-results">
+  <div class="res-header">
+    <div class="res-rnd-lbl" id="res-rnd-lbl">Round 1 Results</div>
+    <div class="res-title" id="res-title">10 years later…</div>
+  </div>
+  <div class="res-card" id="res-summary"></div>
+  <div class="prices-section" id="res-prices"></div>
+  <div id="res-tax"></div>
+  <div class="res-btn"><button class="btn-primary" id="btn-next">Continue →</button></div>
+</div>
+
+<!-- GAME OVER -->
+<div class="screen" id="s-gameover">
+  <div class="go-header">
+    <div class="go-emoji">🏆</div>
+    <div class="go-title">Final Results</div>
+    <div class="go-sub">30 years of investing</div>
+  </div>
+  <div class="lb" id="leaderboard"></div>
+</div>
+
+<!-- TRADE MODAL -->
+<div class="overlay" id="modal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="m-title">Buy Nvidia</div>
+    <div class="sheet-sub" id="m-sub">NVDA · Stock</div>
+    <div class="bal-row">
+      <div><div class="bal-lbl" id="m-bal-lbl">Available cash</div><div class="bal-val" id="m-bal-val">—</div></div>
+      <div id="m-pos-wrap" style="text-align:right">
+        <div class="bal-lbl">Invested</div><div class="bal-val" id="m-pos-val">—</div>
+      </div>
+    </div>
+    <div class="amt-wrap">
+      <span class="amt-prefix">€</span>
+      <input class="amt-input" id="m-amount" type="number" min="0" placeholder="0" inputmode="numeric">
+    </div>
+    <div class="quick" id="m-quick"></div>
+    <div class="tax-preview" id="m-tax-preview">
+      <div class="tp-lbl">Estimated capital gains tax</div>
+      <div class="tp-val" id="m-tax-val">€0</div>
+      <div class="tp-detail" id="m-tax-detail"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm buy-mode" id="m-confirm" onclick="confirmTrade()">Buy</button>
+    </div>
+  </div>
+</div>
+
+<script src="/realtime-shim.js"></script>
+<script src="/game-engine.js"></script>
+<script>
+const socket = io();
+
+// ── state ────────────────────────────────────────────────────
+let myCode   = null;
+let myCharId = null;
+let gameState = null;
+let pendingOrders = {}; // { NVDA: { type:'buy'|'sell', amount:5000 } }
+let modalTicker = null;
+let modalMode   = 'buy';
+
+// ── screen helper ────────────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+}
+
+// ── JOIN ─────────────────────────────────────────────────────
+document.getElementById('btn-join').addEventListener('click', doJoin);
+document.getElementById('inp-code').addEventListener('keydown', e => { if (e.key==='Enter') doJoin(); });
+
+function doJoin() {
+  const code = document.getElementById('inp-code').value.trim().toUpperCase();
+  const err  = document.getElementById('join-error');
+  err.textContent = '';
+  if (code.length < 3) { err.textContent = 'Enter the game code from the board.'; return; }
+  const btn = document.getElementById('btn-join');
+  btn.disabled = true; btn.textContent = 'Connecting…';
+  socket.emit('join_game', { code }, (res) => {
+    if (res.error) {
+      err.textContent = res.error;
+      btn.disabled = false; btn.textContent = 'Join Game'; return;
+    }
+    myCode   = code;
+    myCharId = res.charId;
+    gameState = res.state;
+    document.getElementById('lb-code').textContent = code;
+    show('lobby');
+    renderLobby();
+  });
+}
+
+// ── server pushes ────────────────────────────────────────────
+socket.on('game_update', state => {
+  gameState = state;
+  syncScreen();
+});
+
+function syncScreen() {
+  if (!myCharId) return;
+  const status = gameState.meta.status;
+  const me = gameState.players[myCharId];
+
+  if (status === 'lobby')     { renderLobby(); return; }
+  if (status === 'investing') {
+    if (me.submitted) { renderWaiting(); return; }
+    renderApp(); return;
+  }
+  if (status === 'revealing') { renderApp(); return; } // prices now visible
+  if (status === 'gameover')  { renderGameOver(); return; }
+  // round_results → show results screen
+  if (status === 'round_results' || status === 'revealing') renderResults();
+}
+
+// ── LOBBY ────────────────────────────────────────────────────
+function renderLobby() {
+  show('lobby');
+  const list = document.getElementById('players-list');
+  list.innerHTML = '';
+  const joined = gameState?.players || {};
+  CHAR_ORDER.forEach(id => {
+    const c = CHARACTERS[id];
+    const p = joined[id];
+    const div = document.createElement('div');
+    div.className = 'slot';
+    div.innerHTML = `
+      <span class="slot-dot ${p ? 'dot-on' : 'dot-off'}"></span>
+      <span class="slot-emoji">${p ? c.emoji : '⬜'}</span>
+      <div>
+        <div class="slot-name" style="color:${p ? c.color : '#444'}">${p ? c.name : 'Waiting…'}</div>
+        <div class="slot-job">${p ? c.job : ''}</div>
+      </div>
+      ${id === myCharId ? '<span style="margin-left:auto;font-size:11px;color:#a855f7;font-weight:700">YOU</span>' : ''}`;
+    list.appendChild(div);
+  });
+  // Auto-advance if server changed status
+  if (gameState.meta.status === 'investing') renderCharReveal();
+}
+
+// ── CHARACTER REVEAL ─────────────────────────────────────────
+function renderCharReveal() {
+  const c = CHARACTERS[myCharId];
+  document.getElementById('cr-emoji').textContent = c.emoji;
+  document.getElementById('cr-name').textContent  = c.name;
+  document.getElementById('cr-name').style.color  = c.color;
+  document.getElementById('cr-job').textContent   = c.job;
+  document.getElementById('cr-budget').textContent = fmtEuro(c.startingCash);
+  document.getElementById('cr-tagline').textContent = c.tagline;
+  document.getElementById('cr-tax-note').textContent = c.taxNote;
+  document.getElementById('btn-ready').onclick = () => {
+    socket.emit('player_ready', { code: myCode, charId: myCharId });
+    renderApp();
+  };
+  show('char');
+}
+
+// ── APP ──────────────────────────────────────────────────────
+function renderApp() {
+  show('app');
+  const c  = CHARACTERS[myCharId];
+  const me = gameState.players[myCharId];
+  const round = gameState.meta.round;
+  const prices = gameState.prices?.[round] || null;
+
+  // Header
+  document.getElementById('app-emoji').textContent  = c.emoji;
+  document.getElementById('app-name').textContent   = c.name;
+  document.getElementById('app-round').textContent  = `Round ${round}/${TOTAL_ROUNDS}`;
+
+  const portVal = portfolioValue(me.portfolio, prices || {});
+  const total   = me.cash + portVal;
+  const wEl = document.getElementById('app-wealth');
+  wEl.textContent = fmtEuro(total);
+  wEl.style.color = c.color;
+  document.getElementById('app-cash').textContent = fmtEuro(me.cash);
+
+  renderMarkets(me, round, prices);
+  renderPortfolio(me, prices);
+  renderTax(me, prices);
+  updateSubmitBtn(me);
+}
+
+function renderMarkets(me, round, prices) {
+  ['stock','bond','etf'].forEach(type => document.getElementById('list-'+type).innerHTML = '');
+  const canSell = round > 1;
+
+  for (const [ticker, asset] of Object.entries(ASSETS)) {
+    const container = document.getElementById('list-' + asset.type);
+    const pos    = me.portfolio?.[ticker];
+    const posAmt = pos?.cost || 0;
+    const mult   = prices?.[ticker];
+    const hasPending = pendingOrders[ticker];
+
+    const row = document.createElement('div');
+    row.className = 'asset-row';
+
+    let retHTML = '';
+    if (mult) {
+      const pct = ((mult-1)*100);
+      retHTML = `<div class="a-ret ${pct>=0?'positive':'negative'}">${pct>=0?'+':''}${pct.toFixed(1)}%</div>`;
+    } else {
+      retHTML = `<div class="a-ret hidden-ret">10 yrs…</div>`;
+    }
+
+    const pendingBadge = hasPending
+      ? `<div style="font-size:10px;color:#a855f7;margin-top:2px">${hasPending.type==='buy'?'Buy':'Sell'} €${fmtNum(hasPending.amount)} pending</div>`
+      : '';
+
+    row.innerHTML = `
+      <span class="a-emoji">${asset.emoji}</span>
+      <div class="a-info">
+        <div class="a-name">${asset.name}</div>
+        <div class="a-meta">${ticker}<span class="a-tag tag-${asset.type}">${asset.type.toUpperCase()}</span></div>
+        ${posAmt > 0 ? `<div class="a-invested">Invested: ${fmtEuro(posAmt)}</div>` : ''}
+        ${pendingBadge}
+      </div>
+      <div class="a-right">${retHTML}</div>
+      ${canSell && posAmt > 0
+        ? `<button class="btn-sell" onclick="openModal('${ticker}','sell')">Sell</button>`
+        : `<button class="btn-buy" onclick="openModal('${ticker}','buy')">Buy</button>`}`;
+    container.appendChild(row);
+  }
+}
+
+function renderPortfolio(me, prices) {
+  const div = document.getElementById('port-content');
+  const entries = Object.entries(me.portfolio || {});
+  if (!entries.length) {
+    div.innerHTML = `<div class="empty-state">No investments yet.<br>Go to Markets to start investing.</div>`;
+    return;
+  }
+  div.innerHTML = '';
+  let costTotal = 0, valTotal = 0;
+  for (const [ticker, pos] of entries) {
+    const a    = ASSETS[ticker];
+    const mult = prices?.[ticker];
+    const cur  = mult ? pos.cost * mult : null;
+    const gain = cur !== null ? cur - pos.cost : null;
+    costTotal += pos.cost;
+    if (cur) valTotal += cur;
+
+    const row = document.createElement('div');
+    row.className = 'port-row';
+    row.innerHTML = `
+      <span style="font-size:22px">${a.emoji}</span>
+      <div class="port-info">
+        <div class="port-name">${a.name}</div>
+        <div class="port-sub">Cost: ${fmtEuro(pos.cost)}</div>
+      </div>
+      <div class="port-right">
+        <div class="port-val">${cur ? fmtEuro(cur) : '—'}</div>
+        ${gain !== null ? `<div class="port-gain ${gain>=0?'positive':'negative'}">${gain>=0?'+':''}${fmtEuro(gain)}</div>` : ''}
+      </div>`;
+    div.appendChild(row);
+  }
+  if (prices) {
+    const totalGain = valTotal - costTotal;
+    const summary = document.createElement('div');
+    summary.style.cssText = 'padding:14px 20px;border-top:1px solid #1f1f1f';
+    summary.innerHTML = `
+      <div style="display:flex;justify-content:space-between;padding:5px 0">
+        <span style="color:#888;font-size:13px">Unrealised gain</span>
+        <span style="font-weight:800;color:${totalGain>=0?'#22c55e':'#ef4444'}">${totalGain>=0?'+':''}${fmtEuro(totalGain)}</span>
+      </div>`;
+    div.appendChild(summary);
+  }
+}
+
+function renderTax(me, prices) {
+  const c   = CHARACTERS[myCharId];
+  const div = document.getElementById('tax-content');
+  let estGross = 0;
+  if (prices) {
+    for (const [t, pos] of Object.entries(me.portfolio || {})) {
+      const mult = prices[t] || 1;
+      estGross += Math.max(0, pos.cost * mult - pos.cost);
+    }
+  }
+  const estTax = calcTax(myCharId, estGross);
+
+  div.innerHTML = `
+    <div class="tax-section card" style="border-radius:14px">
+      <div style="font-size:13px;color:#888;margin-bottom:12px">Belgian Capital Gains Tax (2025)</div>
+      <div class="tax-row"><span class="tax-row-lbl">Rate</span><span class="tax-row-val">${c.taxType==='company'?'0% (holding company)':'10%'}</span></div>
+      <div class="tax-row"><span class="tax-row-lbl">Exemption per round</span><span class="tax-row-val">${c.taxType==='company'?'N/A':fmtEuro(ROUND_EXEMPT)}</span></div>
+      <div class="tax-row"><span class="tax-row-lbl">Total tax paid</span><span class="tax-row-val negative">${fmtEuro(me.totalTaxPaid||0)}</span></div>
+      ${prices ? `
+        <div class="tax-row"><span class="tax-row-lbl">Unrealised gross gain</span><span class="tax-row-val">${fmtEuro(estGross)}</span></div>
+        ${c.taxType==='company'
+          ? `<div class="tax-zero-highlight"><div class="tax-zero-lbl">Tax if sold now</div><div class="tax-zero-val">€0</div><div class="tax-note">${c.taxNote}</div></div>`
+          : `<div class="tax-highlight"><div class="tax-h-lbl">Tax if sold now</div><div class="tax-h-val">${fmtEuro(estTax)}</div><div class="tax-note">${c.taxNote}</div></div>`}
+      ` : `<div class="tax-note" style="margin-top:12px">Tax breakdown visible after prices are revealed.</div>`}
+    </div>`;
+}
+
+function updateSubmitBtn(me) {
+  const btn = document.getElementById('btn-submit');
+  if (me.submitted) { btn.textContent = '✓ Submitted'; btn.disabled = true; return; }
+  const n = Object.keys(pendingOrders).length;
+  btn.disabled = n === 0;
+  btn.textContent = n ? `Confirm Investments (${n})` : 'Confirm Investments';
+}
+
+// ── TABS ─────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.pane').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('pane-' + t.dataset.tab).classList.add('active');
+  });
+});
+
+// ── MODAL ────────────────────────────────────────────────────
+function openModal(ticker, mode) {
+  const me = gameState.players[myCharId];
+  const a  = ASSETS[ticker];
+  const c  = CHARACTERS[myCharId];
+  const prices = gameState.prices?.[gameState.meta.round] || {};
+  const pos = me.portfolio?.[ticker];
+  const posAmt = pos?.cost || 0;
+  const mult   = prices[ticker] || 1;
+  const posVal = posAmt * mult;
+
+  modalTicker = ticker;
+  modalMode   = mode;
+  document.getElementById('m-title').textContent = (mode==='buy'?'Buy ':'Sell ') + a.name;
+  document.getElementById('m-sub').textContent   = ticker + ' · ' + a.type.charAt(0).toUpperCase() + a.type.slice(1);
+  document.getElementById('m-amount').value = '';
+
+  const btn = document.getElementById('m-confirm');
+  btn.className = 'btn-confirm ' + (mode==='buy' ? 'buy-mode' : 'sell-mode');
+  btn.textContent = mode === 'buy' ? 'Buy' : 'Sell';
+  btn.disabled = true;
+
+  if (mode === 'buy') {
+    document.getElementById('m-bal-lbl').textContent = 'Available cash';
+    document.getElementById('m-bal-val').textContent = fmtEuro(me.cash);
+    document.getElementById('m-pos-wrap').style.display = posAmt > 0 ? 'block' : 'none';
+    document.getElementById('m-pos-val').textContent = fmtEuro(posAmt);
+    buildQuick([.25, .5, .75, 1].map(f => Math.floor(me.cash * f)));
+    document.getElementById('m-tax-preview').style.display = 'none';
+  } else {
+    document.getElementById('m-bal-lbl').textContent = 'Position value';
+    document.getElementById('m-bal-val').textContent = fmtEuro(posVal);
+    document.getElementById('m-pos-wrap').style.display = 'none';
+    buildQuick([.25, .5, .75, 1].map(f => Math.floor(posVal * f)));
+    // Show tax preview
+    if (c.taxType !== 'company' && posVal > posAmt) {
+      const gain = posVal - posAmt;
+      const tax  = calcTax(myCharId, gain);
+      document.getElementById('m-tax-preview').style.display = tax > 0 ? 'block' : 'none';
+      document.getElementById('m-tax-val').textContent = fmtEuro(tax);
+      document.getElementById('m-tax-detail').textContent =
+        `Gain: ${fmtEuro(gain)} − ${fmtEuro(ROUND_EXEMPT)} exemption = ${fmtEuro(Math.max(0,gain-ROUND_EXEMPT))} × 10%`;
+    } else {
+      document.getElementById('m-tax-preview').style.display = 'none';
+    }
+  }
+
+  document.getElementById('m-amount').oninput = validateAmount;
+  document.getElementById('modal').classList.add('open');
+  setTimeout(() => document.getElementById('m-amount').focus(), 100);
+}
+
+function buildQuick(amounts) {
+  const w = document.getElementById('m-quick');
+  w.innerHTML = '';
+  amounts.forEach(a => {
+    if (a <= 0) return;
+    const b = document.createElement('button');
+    b.className = 'quick-btn';
+    b.textContent = fmtEuro(a);
+    b.onclick = () => { document.getElementById('m-amount').value = a; validateAmount(); };
+    w.appendChild(b);
+  });
+}
+
+function validateAmount() {
+  const val = parseFloat(document.getElementById('m-amount').value) || 0;
+  const me  = gameState.players[myCharId];
+  const btn = document.getElementById('m-confirm');
+  if (modalMode === 'buy') {
+    btn.disabled = val <= 0 || val > me.cash;
+  } else {
+    const prices = gameState.prices?.[gameState.meta.round] || {};
+    const pos    = me.portfolio?.[modalTicker];
+    const posVal = (pos?.cost || 0) * (prices[modalTicker] || 1);
+    btn.disabled = val <= 0 || val > posVal;
+  }
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function confirmTrade() {
+  const amount = parseFloat(document.getElementById('m-amount').value) || 0;
+  if (amount <= 0) return;
+  pendingOrders[modalTicker] = { type: modalMode, amount };
+  closeModal();
+  const me = gameState.players[myCharId];
+  renderMarkets(me, gameState.meta.round, gameState.prices?.[gameState.meta.round] || null);
+  updateSubmitBtn(me);
+}
+
+// ── SUBMIT ───────────────────────────────────────────────────
+document.getElementById('btn-submit').addEventListener('click', () => {
+  const orders = Object.entries(pendingOrders).map(([ticker, o]) => ({ ticker, ...o }));
+  if (!orders.length) return;
+  document.getElementById('btn-submit').disabled = true;
+  document.getElementById('btn-submit').textContent = 'Submitting…';
+
+  socket.emit('submit_orders', { code: myCode, charId: myCharId, orders }, res => {
+    pendingOrders = {};
+    if (res?.error) { alert(res.error); return; }
+    show('wait');
+  });
+});
+
+// ── WAITING ──────────────────────────────────────────────────
+function renderWaiting() {
+  show('wait');
+  const players = gameState?.players || {};
+  const sub = Object.values(players).filter(p => p.submitted).length;
+  document.getElementById('wait-count').textContent = `${sub} / ${Object.keys(players).length} submitted`;
+}
+
+// ── RESULTS ──────────────────────────────────────────────────
+function renderResults() {
+  show('results');
+  const round  = gameState.meta.round;
+  const me     = gameState.players[myCharId];
+  const prices = gameState.prices?.[round] || {};
+  const c      = CHARACTERS[myCharId];
+
+  document.getElementById('res-rnd-lbl').textContent = `Round ${round} of ${TOTAL_ROUNDS}`;
+  document.getElementById('res-title').textContent   = `After ${round * ROUND_YEARS} years…`;
+
+  const portVal  = portfolioValue(me.portfolio, prices);
+  const total    = me.cash + portVal;
+  const costBasis = Object.values(me.portfolio||{}).reduce((s,p)=>s+p.cost,0);
+  const grossGain = portVal - costBasis;
+
+  document.getElementById('res-summary').innerHTML = `
+    <div class="res-row"><span class="res-row-lbl">Portfolio value</span><span class="res-row-val">${fmtEuro(portVal)}</span></div>
+    <div class="res-row"><span class="res-row-lbl">Cash</span><span class="res-row-val">${fmtEuro(me.cash)}</span></div>
+    <div class="res-row">
+      <span class="res-row-lbl" style="font-weight:700">Total wealth</span>
+      <span class="res-row-val" style="color:${c.color};font-size:17px">${fmtEuro(total)}</span>
+    </div>
+    <div class="res-row">
+      <span class="res-row-lbl">Unrealised gain</span>
+      <span class="res-row-val ${grossGain>=0?'positive':'negative'}">${grossGain>=0?'+':''}${fmtEuro(grossGain)}</span>
+    </div>`;
+
+  // Price list
+  const sorted = Object.entries(prices).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('res-prices').innerHTML = `<div class="prices-lbl">Market returns (${ROUND_YEARS} years)</div>` +
+    sorted.map(([t, m]) => {
+      const a = ASSETS[t]; const pct = ((m-1)*100);
+      return `<div class="price-row">
+        <span class="p-emoji">${a.emoji}</span>
+        <span class="p-name">${a.name}</span>
+        <span class="p-pct ${pct>=0?'positive':'negative'}">${pct>=0?'+':''}${pct.toFixed(1)}%</span>
+      </div>`;
+    }).join('');
+
+  // Tax block
+  const taxBlock = document.getElementById('res-tax');
+  if (c.taxType === 'company') {
+    taxBlock.innerHTML = `<div class="zero-callout"><div class="zc-lbl">Capital Gains Tax</div><div class="zc-val">€0</div><div style="font-size:12px;color:#888;margin-top:6px">${c.taxNote}</div></div>`;
+  } else {
+    taxBlock.innerHTML = `<div class="tax-callout"><div class="tc-lbl">Tax paid to date</div><div class="tc-val">${fmtEuro(me.totalTaxPaid||0)}</div><div class="tc-note">${c.taxNote}</div></div>`;
+  }
+
+  const isLast = round >= TOTAL_ROUNDS;
+  const btn = document.getElementById('btn-next');
+  btn.textContent = isLast ? 'See Final Results →' : 'Next Round →';
+  btn.onclick = () => { if (isLast) renderGameOver(); };
+}
+
+// ── GAME OVER ────────────────────────────────────────────────
+function renderGameOver() {
+  show('gameover');
+  const players = gameState.players || {};
+  const sorted  = CHAR_ORDER
+    .filter(id => players[id])
+    .map(id => ({ id, c: CHARACTERS[id], p: players[id] }))
+    .sort((a, b) => b.p.totalWealth - a.p.totalWealth);
+
+  document.getElementById('leaderboard').innerHTML = sorted.map(({ id, c, p }, i) => `
+    <div class="lb-row ${i===0?'r1':''}">
+      <div class="lb-rank">#${i+1}</div>
+      <div class="lb-emoji">${c.emoji}</div>
+      <div class="lb-info">
+        <div class="lb-name" style="color:${c.color}">${c.name}</div>
+        <div class="lb-job">${c.job}</div>
+      </div>
+      <div class="lb-money">
+        <div class="lb-wealth" style="color:${c.color}">${fmtEuro(p.totalWealth)}</div>
+        <div class="lb-tax ${c.taxType==='company'?'positive':'negative'}">
+          ${c.taxType==='company' ? '€0 tax 🟢' : '-'+fmtEuro(p.totalTaxPaid)+' tax'}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── auto-reconnect from URL ───────────────────────────────────
+window.addEventListener('load', () => {
+  const code = new URLSearchParams(location.search).get('code');
+  if (code) { document.getElementById('inp-code').value = code.toUpperCase(); doJoin(); }
+});
+</script>
+</body>
+</html>
