@@ -141,9 +141,21 @@ function send(res, code, payload) {
   res.end(JSON.stringify(payload));
 }
 
+function parseInput(req) {
+  if ((req.method || "GET") === "GET") return req.query || {};
+  if (!req.body) return {};
+  if (typeof req.body === "string") {
+    try {
+      return JSON.parse(req.body);
+    } catch (_) {
+      return {};
+    }
+  }
+  return req.body;
+}
+
 module.exports = async function handler(req, res) {
-  const method = req.method || "GET";
-  const input = method === "GET" ? req.query : (req.body || {});
+  const input = parseInput(req);
   const action = input.action;
 
   if (!action) return send(res, 400, { error: "Missing action" });
@@ -156,7 +168,7 @@ module.exports = async function handler(req, res) {
     return send(res, 200, { code, state: game });
   }
 
-  const code = String(input.code || "").toUpperCase();
+  const code = String(input.code || "").trim().toUpperCase();
   const game = memoryGames[code];
   if (!game) return send(res, 404, { error: "Game not found. Check the code." });
 

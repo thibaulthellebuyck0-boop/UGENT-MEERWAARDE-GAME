@@ -3,367 +3,230 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tax Wars — Host</title>
+<title>Tax Wars — Host Dashboard</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:#0a0a0a;color:#f0f0f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
+:root{
+  --bg:#fff;
+  --surface:#fff;
+  --line:#d9dedb;
+  --line-soft:#e8ecea;
+  --text:#102117;
+  --muted:#5d6f64;
+  --brand:#007a46;
+  --brand-strong:#00663b;
+  --danger:#b4232d;
+  --warn:#7f5e11;
+}
+html,body{
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  overflow:hidden;
+}
 button{border:none;cursor:pointer;font-family:inherit}
-
 .screen{display:none;height:100vh}
 .screen.active{display:flex}
 
-/* SETUP */
-#s-setup{flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:40px;
-  background:radial-gradient(ellipse at 50% 0%,#1a0d2e,#0a0a0a 70%)}
-.setup-logo{font-size:60px}
-.setup-title{font-size:34px;font-weight:900}
-.setup-sub{font-size:15px;color:#888}
-.btn-create{background:#a855f7;color:#fff;padding:18px 48px;border-radius:16px;font-size:18px;font-weight:800}
-.btn-create:hover{opacity:.9}
-
-/* HOST LAYOUT */
-#s-host{flex-direction:row}
-.sidebar{width:300px;flex-shrink:0;border-right:1px solid #181818;display:flex;flex-direction:column;overflow:hidden}
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-
-/* SIDEBAR */
-.sb-head{padding:18px 18px 10px;border-bottom:1px solid #181818}
-.sb-code-lbl{font-size:10px;color:#666;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
-.sb-code{font-size:28px;font-weight:900;color:#a855f7;letter-spacing:.15em}
-.sb-status{font-size:11px;color:#666;margin-top:2px}
-
-.sb-players{flex:1;overflow-y:auto}
-.sb-player{display:flex;align-items:center;gap:9px;padding:9px 18px;border-bottom:1px solid #111}
-.sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.dot-on{background:#22c55e} .dot-off{background:#2a2a2a} .dot-sub{background:#a855f7}
-.sb-emoji{font-size:22px;width:28px;text-align:center}
-.sb-name{font-size:13px;font-weight:700} .sb-job{font-size:10px;color:#555}
-.sb-wealth{text-align:right;margin-left:auto} .sb-w-val{font-size:12px;font-weight:700}
-.sb-w-tax{font-size:10px;color:#ef4444}
-
-.sb-controls{padding:14px 18px;border-top:1px solid #181818;display:flex;flex-direction:column;gap:8px}
-.ctrl-btn{width:100%;padding:12px;border-radius:11px;font-size:13px;font-weight:700;transition:opacity .2s}
-.ctrl-btn:disabled{opacity:.25;cursor:not-allowed}
-.ctrl-btn:not(:disabled):hover{opacity:.9}
-.btn-start{background:#22c55e;color:#000}
-.btn-reveal{background:#eab308;color:#000}
-.btn-next{background:#a855f7;color:#fff}
-.btn-end{background:#ef4444;color:#fff}
-
-/* MAIN */
-.main-bar{padding:14px 22px;display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid #181818;background:#0e0e0e}
-.main-bar-title{font-size:15px;font-weight:700}
-.main-bar-sub{font-size:11px;color:#666;margin-top:2px}
-.chip{padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
-.chip-lobby{background:#1a2535;color:#4f8ef7}
-.chip-investing{background:#0a1a0a;color:#22c55e}
-.chip-revealing{background:#251a00;color:#eab308}
-.chip-results{background:#1a0a2a;color:#a855f7}
-.chip-gameover{background:#1a0a0a;color:#ef4444}
-
-.main-content{flex:1;overflow-y:auto;padding:22px}
-
-/* QR / URL block */
-.qr-row{display:flex;gap:20px;align-items:flex-start;margin-bottom:22px}
-.qr-box{background:#fff;padding:10px;border-radius:10px;flex-shrink:0}
-.qr-info h3{font-size:15px;font-weight:700;margin-bottom:6px}
-.qr-info p{font-size:13px;color:#888;line-height:1.5}
-.url-box{font-size:12px;background:#111;padding:8px 12px;border-radius:8px;color:#a855f7;margin-top:8px;word-break:break-all}
-
-/* Wealth table */
-.tbl{width:100%;border-collapse:collapse}
-.tbl th{text-align:left;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  color:#444;padding:7px 12px;border-bottom:1px solid #181818}
-.tbl td{padding:11px 12px;border-bottom:1px solid #111;vertical-align:middle}
-.tbl tr:last-child td{border-bottom:none}
-.tbl tr:hover td{background:#0e0e0e}
-.char-cell{display:flex;align-items:center;gap:9px}
-.c-emoji{font-size:20px}
-.c-name{font-size:13px;font-weight:700} .c-job{font-size:10px;color:#555}
-.val-big{font-size:15px;font-weight:700}
-.val-tax{font-size:12px;color:#ef4444;font-weight:700}
-.tag-submitted{font-size:10px;padding:2px 9px;border-radius:20px;font-weight:700}
-.sub-yes{background:#0a1a0a;color:#22c55e}
-.sub-no{background:#1a1a1a;color:#555}
-.bar-wrap{width:90px;height:5px;background:#1a1a1a;border-radius:3px}
-.bar-fill{height:5px;border-radius:3px}
-
-/* Prices grid */
-.prices-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:20px}
-.price-card{background:#111;border:1px solid #181818;border-radius:11px;padding:13px;display:flex;align-items:center;gap:10px}
-.pc-emoji{font-size:20px} .pc-name{font-size:12px;font-weight:600} .pc-ticker{font-size:10px;color:#555}
-.pc-ret{font-size:16px;font-weight:900;margin-left:auto}
-.hidden-price{color:#2a2a2a;font-size:12px}
-.positive{color:#22c55e} .negative{color:#ef4444}
-
-/* Final leaderboard */
-.final-lb{display:flex;flex-direction:column;gap:10px}
-.lb-row{background:#111;border:1.5px solid #1a1a1a;border-radius:13px;padding:14px 18px;display:flex;align-items:center;gap:14px}
-.lb-row.r1{border-color:#eab30840;background:#111200}
-.lb-rank{font-size:22px;font-weight:900;color:#444;width:36px}
-.lb-emoji{font-size:30px}
-.lb-info{flex:1} .lb-name{font-size:15px;font-weight:800} .lb-job{font-size:11px;color:#555}
-.lb-money{text-align:right} .lb-wealth{font-size:19px;font-weight:900} .lb-tax{font-size:11px;margin-top:2px}
-.conclusion{margin-top:16px;padding:18px;background:#110a00;border:1.5px solid #eab30825;border-radius:13px}
-.conc-title{font-size:13px;font-weight:700;color:#eab308;margin-bottom:8px}
-.conc-text{font-size:13px;color:#999;line-height:1.6}
-
-/* ── BANK APP THEME OVERRIDE (white + green) ── */
-html,body{
-  background:#f4f7f5 !important;
-  color:#153226 !important;
-}
-.screen{background:#f4f7f5 !important}
-
 #s-setup{
-  background:radial-gradient(ellipse at 50% 0%,#e6f7ec,#f4f7f5 72%) !important;
-}
-.setup-sub,.sb-status,.main-bar-sub,.pc-ticker,.c-job,.lb-job,.conc-text{
-  color:#5e7b6b !important;
-}
-.btn-create{
-  background:#0f9d58 !important;
-  color:#ffffff !important;
-}
-
-.sidebar,.sb-head,.sb-controls,.main-bar,.tbl th,.tbl td,.price-card,.lb-row{
-  border-color:#d7e6dc !important;
-}
-.sidebar,.main-bar,.price-card,.lb-row,.conclusion{
-  background:#ffffff !important;
-}
-.sb-player{border-bottom-color:#ecf2ee !important}
-.sb-code{color:#16a34a !important}
-.sb-code-lbl,.tbl th{color:#5e7b6b !important}
-
-.ctrl-btn.btn-start{background:#16a34a !important;color:#fff !important}
-.ctrl-btn.btn-reveal{background:#fef3c7 !important;color:#92400e !important}
-.ctrl-btn.btn-next{background:#0f9d58 !important;color:#fff !important}
-.ctrl-btn.btn-end{background:#fff5f5 !important;color:#dc2626 !important}
-
-.chip-lobby{background:#e8f7ee !important;color:#0f9d58 !important}
-.chip-investing{background:#dcfce7 !important;color:#15803d !important}
-.chip-revealing{background:#fef3c7 !important;color:#92400e !important}
-.chip-results{background:#e8f7ee !important;color:#0f9d58 !important}
-.chip-gameover{background:#fee2e2 !important;color:#b91c1c !important}
-
-.url-box{
-  background:#f0fdf4 !important;
-  color:#0f9d58 !important;
-}
-.tbl tr:hover td{background:#f5fbf7 !important}
-.sub-yes{background:#e8f7ee !important;color:#15803d !important}
-.sub-no{background:#eef3f0 !important;color:#7b9486 !important}
-.bar-wrap{background:#e8f0eb !important}
-
-.hidden-price{color:#97afa0 !important}
-.positive{color:#16a34a !important}
-.negative{color:#dc2626 !important}
-.lb-rank{color:#8aa899 !important}
-.lb-row.r1{
-  border-color:#facc15 !important;
-  background:#fffbeb !important;
-}
-.conclusion{
-  border-color:#bbf7d0 !important;
-  background:#f0fdf4 !important;
-}
-.conc-title{color:#15803d !important}
-
-/* ── PROFESSIONAL POLISH LAYER ── */
-:root{
-  --bg:#f3f6f4;
-  --surface:#ffffff;
-  --surface-soft:#f8fbf9;
-  --line:#d6e2dc;
-  --line-soft:#e7efea;
-  --text:#10281d;
-  --muted:#5f796c;
-  --brand:#0f8f4e;
-  --brand-strong:#0b7a42;
-}
-
-html,body{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif !important}
-.screen{background:var(--bg) !important}
-
-.sidebar,.main-bar,.price-card,.lb-row,.conclusion,.qr-box{
-  border-radius:12px !important;
-  border:1px solid var(--line) !important;
-  box-shadow:0 1px 2px rgba(16,40,29,.04) !important;
-}
-.sidebar{
-  margin:12px 0 12px 12px;
-  height:calc(100vh - 24px);
-  border-right:1px solid var(--line) !important;
-}
-.main{
-  margin:12px 12px 12px 0;
-  border:1px solid var(--line);
-  border-radius:12px;
-  background:var(--surface);
-}
-.main-content{padding:20px !important}
-
-.setup-title,.main-bar-title{letter-spacing:-.02em !important}
-.setup-sub,.sb-status,.main-bar-sub,.pc-ticker,.c-job,.lb-job,.conc-text,.tbl th{color:var(--muted) !important}
-
-.btn-create,.ctrl-btn.btn-start,.ctrl-btn.btn-next{
-  background:var(--brand) !important;
-  color:#fff !important;
-  border:1px solid var(--brand) !important;
-  border-radius:10px !important;
-}
-.btn-create:hover,.ctrl-btn.btn-start:hover,.ctrl-btn.btn-next:hover{
-  background:var(--brand-strong) !important;
-  border-color:var(--brand-strong) !important;
-}
-.ctrl-btn{font-weight:700 !important}
-
-.tbl td,.sb-player{border-bottom:1px solid var(--line-soft) !important}
-.tbl tr:hover td{background:var(--surface-soft) !important}
-.bar-wrap{height:6px !important;border-radius:999px !important}
-.bar-fill{height:6px !important;border-radius:999px !important}
-
-.chip{
-  border:1px solid var(--line) !important;
-  font-weight:700 !important;
-}
-.url-box{
-  border:1px solid var(--line) !important;
-  border-radius:8px !important;
-}
-
-/* ── FINTRO-STYLE PREMIUM REBUILD ── */
-:root{
-  --bank-bg:#f2f5f3;
-  --bank-surface:#ffffff;
-  --bank-surface-2:#f7faf8;
-  --bank-border:#d6e0da;
-  --bank-border-soft:#e6ede9;
-  --bank-text:#10251b;
-  --bank-muted:#60776b;
-  --bank-brand:#007a46;
-  --bank-brand-dark:#00663b;
-}
-html,body{
-  background:var(--bank-bg) !important;
-  color:var(--bank-text) !important;
-  letter-spacing:.001em;
-}
-.screen{background:var(--bank-bg) !important}
-
-#s-setup{
-  background:radial-gradient(ellipse at 50% 0%,#e6f3ed,#f2f5f3 70%) !important;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:18px;
 }
 .setup-logo{
-  width:78px;
-  height:78px;
-  border-radius:20px;
-  display:grid;
-  place-items:center;
-  background:linear-gradient(180deg,#008a4f,#00673b);
-  color:#fff;
-  font-size:26px;
-  font-weight:800;
-  box-shadow:0 12px 26px rgba(0,122,70,.18);
+  width:76px;height:76px;border-radius:16px;
+  display:grid;place-items:center;
+  font-size:28px;font-weight:800;
+  color:#fff;background:var(--brand);
 }
-.setup-title{font-size:32px !important}
-.setup-sub{
-  text-transform:uppercase;
-  letter-spacing:.08em;
-  font-size:12px !important;
+.setup-title{font-size:34px;font-weight:800;letter-spacing:-.03em}
+.setup-sub{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.08em}
+.btn-create{
+  background:var(--brand);color:#fff;border:1px solid var(--brand);
+  padding:14px 36px;border-radius:10px;font-size:14px;font-weight:700;
 }
-.btn-create,.ctrl-btn.btn-start,.ctrl-btn.btn-next{
-  background:var(--bank-brand) !important;
-  border-color:var(--bank-brand) !important;
-  color:#fff !important;
+.btn-create:hover{background:var(--brand-strong);border-color:var(--brand-strong)}
+
+#s-host{padding:14px;gap:14px}
+.sidebar{
+  width:330px;flex-shrink:0;
+  border:1px solid var(--line);border-radius:12px;
+  display:flex;flex-direction:column;overflow:hidden;
 }
-.btn-create:hover,.ctrl-btn.btn-start:hover,.ctrl-btn.btn-next:hover{
-  background:var(--bank-brand-dark) !important;
-  border-color:var(--bank-brand-dark) !important;
+.sb-head{padding:16px;border-bottom:1px solid var(--line)}
+.sb-code-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.sb-code{font-size:30px;font-weight:800;letter-spacing:.14em;color:var(--brand);margin-top:2px}
+.sb-status{font-size:12px;color:var(--muted);margin-top:4px}
+.sb-players{flex:1;overflow-y:auto}
+.sb-player{
+  display:flex;align-items:center;gap:10px;padding:10px 16px;
+  border-bottom:1px solid var(--line-soft);
+}
+.sb-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-on{background:var(--brand)} .dot-off{background:#bbc5c0} .dot-sub{background:#1f6f8b}
+.sb-emoji{font-size:19px;width:26px;text-align:center}
+.sb-name{font-size:13px;font-weight:700}
+.sb-job{font-size:11px;color:var(--muted)}
+.sb-wealth{text-align:right;margin-left:auto}
+.sb-w-val{font-size:12px;font-weight:700}
+.sb-w-tax{font-size:11px;color:var(--danger)}
+.sb-controls{
+  border-top:1px solid var(--line);
+  padding:14px 16px;display:flex;flex-direction:column;gap:8px;
+}
+.ctrl-btn{
+  width:100%;padding:11px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid var(--line);
+  background:#fff;color:var(--text);
+}
+.ctrl-btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-start,.btn-next{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn-start:hover,.btn-next:hover{background:var(--brand-strong);border-color:var(--brand-strong)}
+.btn-reveal{color:var(--warn)}
+.btn-end{color:var(--danger)}
+
+.main{
+  flex:1;border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;
+}
+.main-bar{
+  padding:16px 20px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.main-bar-title{font-size:18px;font-weight:700;letter-spacing:-.01em}
+.main-bar-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.chip{
+  border:1px solid var(--line);border-radius:999px;padding:6px 12px;
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+}
+.chip-lobby,.chip-investing,.chip-revealing,.chip-results,.chip-gameover{
+  color:var(--brand);border-color:var(--brand)
+}
+.main-content{flex:1;overflow-y:auto;padding:16px}
+.section-title{
+  font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;
 }
 
-#s-host{
-  gap:12px;
-  padding:12px;
+.kpi-grid{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px;
 }
-.sidebar{
-  margin:0 !important;
-  height:auto !important;
-  border:1px solid var(--bank-border) !important;
-  border-radius:14px !important;
-  background:var(--bank-surface) !important;
+.kpi-card{
+  border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface);
 }
-.main{
-  margin:0 !important;
-  border:1px solid var(--bank-border) !important;
-  border-radius:14px !important;
-  background:var(--bank-surface) !important;
+.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.kpi-value{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-top:6px}
+
+.chart-grid{
+  display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:12px;
 }
-.main-bar,.sb-head,.sb-controls{
-  background:var(--bank-surface) !important;
+.chart-card,.table-card,.prices-card,.qr-card,.final-card{
+  border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface);
 }
-.sb-player,.tbl td{
-  border-bottom:1px solid var(--bank-border-soft) !important;
+.chart-title{font-size:12px;font-weight:700;margin-bottom:10px}
+.chart-wrap{height:200px}
+.chart-wrap.small{height:160px}
+.chart-wrap svg{width:100%;height:100%}
+.legend{margin-top:8px;display:flex;gap:10px;flex-wrap:wrap}
+.legend-item{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.legend-dot{width:9px;height:9px;border-radius:50%}
+
+.table-card{padding:0;overflow:hidden}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{
+  text-align:left;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;
+  border-bottom:1px solid var(--line);padding:10px 12px;
 }
-.sb-code{
-  font-size:30px !important;
-  color:var(--bank-brand) !important;
+.tbl td{padding:11px 12px;border-bottom:1px solid var(--line-soft);vertical-align:middle;font-size:12px}
+.tbl tr:last-child td{border-bottom:none}
+.char-cell{display:flex;align-items:center;gap:10px}
+.c-emoji{font-size:20px}
+.c-name{font-size:13px;font-weight:700}
+.c-job{font-size:11px;color:var(--muted)}
+.val-big{font-size:13px;font-weight:700}
+.val-tax{font-size:12px;color:var(--danger);font-weight:700}
+.bar-wrap{width:110px;height:6px;background:#e4e8e6;border-radius:999px}
+.bar-fill{height:6px;border-radius:999px;background:var(--brand)}
+.tag-submitted{
+  padding:3px 8px;border-radius:999px;font-size:10px;font-weight:700;border:1px solid var(--line);
 }
-.main-bar-title{
-  font-size:18px !important;
-  font-weight:700 !important;
+.sub-yes{color:var(--brand);border-color:var(--brand)}
+.sub-no{color:var(--muted)}
+
+.prices-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.price-card{
+  border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px;
 }
-.main-bar-sub,.sb-status,.sb-job,.pc-ticker,.c-job,.lb-job,.conc-text{
-  color:var(--bank-muted) !important;
+.pc-emoji{font-size:18px}
+.pc-name{font-size:12px;font-weight:600}
+.pc-ticker{font-size:10px;color:var(--muted)}
+.pc-ret{margin-left:auto;font-size:14px;font-weight:800}
+.hidden-price{margin-left:auto;color:#93a097;font-size:11px}
+.positive{color:var(--brand)}
+.negative{color:var(--danger)}
+
+.qr-row{display:grid;grid-template-columns:160px 1fr;gap:14px}
+.qr-box{padding:8px;border:1px solid var(--line);border-radius:8px;display:grid;place-items:center}
+.qr-info h3{font-size:14px}
+.qr-info p{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5}
+.url-box{margin-top:8px;font-size:12px;color:var(--brand);word-break:break-all}
+
+.final-lb{display:flex;flex-direction:column;gap:8px}
+.lb-row{
+  border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+  display:flex;align-items:center;gap:10px;
 }
-.chip{
-  background:var(--bank-surface-2) !important;
-  border:1px solid var(--bank-border) !important;
+.lb-row.r1{border-color:var(--brand)}
+.lb-rank{font-size:15px;font-weight:800;color:var(--muted);width:24px}
+.lb-emoji{font-size:23px}
+.lb-info{flex:1}
+.lb-name{font-size:13px;font-weight:700}
+.lb-job{font-size:11px;color:var(--muted)}
+.lb-money{text-align:right}
+.lb-wealth{font-size:14px;font-weight:800}
+.lb-tax{font-size:11px}
+.conclusion{margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:12px}
+.conc-title{font-size:12px;font-weight:700;margin-bottom:6px}
+.conc-text{font-size:12px;color:var(--muted);line-height:1.6}
+
+@media (max-width:1200px){
+  .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .chart-grid{grid-template-columns:1fr}
 }
-.tbl tr:hover td{background:#f5faf7 !important}
-.price-card,.lb-row,.conclusion,.qr-box{
-  border:1px solid var(--bank-border) !important;
-  border-radius:12px !important;
-  box-shadow:0 1px 2px rgba(16,40,29,.04) !important;
+@media (max-width:980px){
+  #s-host{flex-direction:column}
+  .sidebar{width:100%;max-height:44vh}
+  .main{min-height:56vh}
 }
-.url-box{
-  background:var(--bank-surface-2) !important;
-  color:var(--bank-brand) !important;
-}
-.positive{color:var(--bank-brand) !important}
-.a-emoji,.pc-emoji,.lb-emoji,.c-emoji,.sb-emoji{filter:saturate(.65)}
 </style>
 </head>
 <body>
-
-<!-- SETUP -->
 <div class="screen active" id="s-setup">
   <div class="setup-logo">TW</div>
-  <div><div class="setup-title">Tax Wars</div><div class="setup-sub">Control desk · Portfolio tax simulation</div></div>
+  <div><div class="setup-title">Tax Wars</div><div class="setup-sub">Host Control Dashboard</div></div>
   <button class="btn-create" id="btn-create">Open New Session</button>
 </div>
 
-<!-- HOST -->
 <div class="screen" id="s-host">
   <div class="sidebar">
     <div class="sb-head">
-      <div class="sb-code-lbl">Game Code</div>
-      <div class="sb-code" id="sb-code">—</div>
+      <div class="sb-code-lbl">Session Code</div>
+      <div class="sb-code" id="sb-code">-</div>
       <div class="sb-status" id="sb-status">Waiting for participants</div>
     </div>
     <div class="sb-players" id="sb-players"></div>
     <div class="sb-controls">
       <button class="ctrl-btn btn-start"  id="ctrl-start"  disabled>Start Period 1</button>
-      <button class="ctrl-btn btn-reveal" id="ctrl-reveal" disabled>Publish Market Results</button>
+      <button class="ctrl-btn btn-reveal" id="ctrl-reveal" disabled>Publish Results</button>
       <button class="ctrl-btn btn-next"   id="ctrl-next"   disabled>Open Next Period</button>
       <button class="ctrl-btn btn-end"    id="ctrl-end"    disabled>Close Session</button>
     </div>
   </div>
   <div class="main">
     <div class="main-bar">
-      <div><div class="main-bar-title" id="bar-title">Session Lobby</div><div class="main-bar-sub" id="bar-sub">Waiting for participants to connect</div></div>
+      <div>
+        <div class="main-bar-title" id="bar-title">Session Lobby</div>
+        <div class="main-bar-sub" id="bar-sub">Waiting for participants to connect</div>
+      </div>
       <div class="chip chip-lobby" id="bar-chip">Lobby</div>
     </div>
     <div class="main-content" id="main-content"></div>
@@ -374,56 +237,93 @@ html,body{
 <script src="/game-engine.js"></script>
 <script>
 const socket = io();
-let gameCode  = null;
+let gameCode = null;
 let gameState = null;
+const roundHistory = {};
 
-// ── Create game ───────────────────────────────────────────────
-document.getElementById('btn-create').addEventListener('click', () => {
-  socket.emit('host_create', {}, ({ code, state }) => {
-    gameCode  = code;
+document.getElementById("btn-create").addEventListener("click", () => {
+  socket.emit("host_create", {}, ({ code, state }) => {
+    gameCode = code;
     gameState = state;
-    document.getElementById('sb-code').textContent = code;
-    document.getElementById('s-setup').classList.remove('active');
-    document.getElementById('s-host').classList.add('active');
-    renderLobby();
-    subscribeSidebar();
+    document.getElementById("sb-code").textContent = code;
+    document.getElementById("s-setup").classList.remove("active");
+    document.getElementById("s-host").classList.add("active");
+    renderDashboard();
   });
 });
 
-socket.on('game_update', state => {
+socket.on("game_update", state => {
   gameState = state;
+  captureRoundHistory();
+  renderDashboard();
+});
+
+function renderDashboard() {
+  if (!gameState) return;
   updateSidebar();
   updateButtons();
   updateBar();
-  const status = state.meta.status;
-  if (status === 'lobby' || status === 'character_reveal') renderLobbyTable();
-  else if (status === 'investing' || status === 'revealing') renderRound();
-  else if (status === 'gameover') renderFinal();
-});
+  const status = gameState.meta.status;
+  if (status === "lobby" || status === "character_reveal") {
+    renderLobby();
+    renderLobbyTable();
+  } else if (status === "investing" || status === "revealing" || status === "round_results") {
+    renderRound();
+  } else if (status === "gameover") {
+    renderFinal();
+  }
+}
 
-function subscribeSidebar() { /* updates come via game_update */ }
+function getRows() {
+  const round = gameState.meta.round;
+  const prices = gameState.prices?.[round] || {};
+  const players = gameState.players || {};
+  return CHAR_ORDER.filter(id => players[id]).map(id => {
+    const c = CHARACTERS[id];
+    const p = players[id];
+    const portfolioAtCost = Object.values(p.portfolio || {}).reduce((sum, v) => sum + (v.cost || 0), 0);
+    const hasPriceData = Object.keys(prices).length > 0;
+    const portVal = hasPriceData ? portfolioValue(p.portfolio, prices) : portfolioAtCost;
+    return { id, c, p, cash: p.cash, portVal, wealth: p.cash + portVal };
+  });
+}
 
-// ── SIDEBAR ───────────────────────────────────────────────────
+function captureRoundHistory() {
+  const round = gameState.meta.round;
+  const rows = getRows();
+  rows.forEach(({ id, wealth, p }) => {
+    if (!roundHistory[id]) roundHistory[id] = [];
+    roundHistory[id][round] = { wealth, cash: p.cash, tax: p.totalTaxPaid || 0 };
+  });
+}
+
 function updateSidebar() {
   const statusMap = {
-    lobby:'Waiting for participants', investing:'Investment period active',
-    revealing:'Prices revealed', round_results:'Showing results', gameover:'Game finished'
+    lobby: "Waiting for participants",
+    character_reveal: "Assigning characters",
+    investing: "Investment period active",
+    revealing: "Returns published",
+    round_results: "Reviewing statements",
+    gameover: "Session closed"
   };
-  document.getElementById('sb-status').textContent = statusMap[gameState.meta.status] || gameState.meta.status;
-
-  const list = document.getElementById('sb-players');
-  list.innerHTML = '';
+  document.getElementById("sb-status").textContent = statusMap[gameState.meta.status] || gameState.meta.status;
+  const list = document.getElementById("sb-players");
+  list.innerHTML = "";
   CHAR_ORDER.forEach(id => {
     const c = CHARACTERS[id];
     const p = gameState.players?.[id];
-    const div = document.createElement('div');
-    div.className = 'sb-player';
-    const dotClass = !p ? 'dot-off' : p.submitted ? 'dot-sub' : 'dot-on';
+    const dotClass = !p ? "dot-off" : p.submitted ? "dot-sub" : "dot-on";
+    const div = document.createElement("div");
+    div.className = "sb-player";
     div.innerHTML = `
       <span class="sb-dot ${dotClass}"></span>
-      <span class="sb-emoji">${p ? c.emoji : '⬜'}</span>
-      <div><div class="sb-name" style="color:${p?c.color:'#333'}">${p?c.name:'Empty'}</div><div class="sb-job">${p?c.job:''}</div></div>
-      ${p ? `<div class="sb-wealth"><div class="sb-w-val">${fmtEuro(p.totalWealth)}</div>${p.totalTaxPaid>0?`<div class="sb-w-tax">-${fmtEuro(p.totalTaxPaid)}</div>`:''}</div>` : ''}`;
+      <span class="sb-emoji">${p ? c.emoji : "⬜"}</span>
+      <div>
+        <div class="sb-name" style="color:${p ? c.color : "#98a69e"}">${p ? c.name : "Open seat"}</div>
+        <div class="sb-job">${p ? c.job : "Waiting"}</div>
+      </div>
+      ${p ? `<div class="sb-wealth"><div class="sb-w-val">${fmtEuro(p.totalWealth)}</div><div class="sb-w-tax">${p.totalTaxPaid > 0 ? "-" + fmtEuro(p.totalTaxPaid) : ""}</div></div>` : ""}
+    `;
     list.appendChild(div);
   });
 }
@@ -432,189 +332,279 @@ function updateButtons() {
   const s = gameState.meta.status;
   const r = gameState.meta.round;
   const players = gameState.players || {};
-  const joined  = Object.keys(players).length;
-  const subm    = Object.values(players).filter(p=>p.submitted).length;
-
-  const start  = document.getElementById('ctrl-start');
-  const reveal = document.getElementById('ctrl-reveal');
-  const next   = document.getElementById('ctrl-next');
-  const end    = document.getElementById('ctrl-end');
-
-  start.disabled  = !(s === 'lobby' && joined >= 1);
+  const joined = Object.keys(players).length;
+  const submitted = Object.values(players).filter(p => p.submitted).length;
+  const start = document.getElementById("ctrl-start");
+  const reveal = document.getElementById("ctrl-reveal");
+  const next = document.getElementById("ctrl-next");
+  const end = document.getElementById("ctrl-end");
+  start.disabled = !(s === "lobby" && joined >= 1);
   start.textContent = `Start Period ${r}`;
-  reveal.disabled = s !== 'investing';
-  reveal.textContent = `Publish Results (${subm}/${joined})`;
-  next.disabled   = s !== 'revealing';
-  end.disabled    = !(s === 'revealing' && r >= TOTAL_ROUNDS);
+  reveal.disabled = s !== "investing";
+  reveal.textContent = `Publish Results (${submitted}/${joined})`;
+  next.disabled = s !== "revealing";
+  end.disabled = !(s === "revealing" && r >= TOTAL_ROUNDS);
 }
 
 function updateBar() {
   const s = gameState.meta.status;
   const r = gameState.meta.round;
-  const titles  = { lobby:'Session Lobby', investing:`Period ${r} / ${TOTAL_ROUNDS}`, revealing:`Period ${r} — Results Published`, round_results:`Period ${r} — Statements`, gameover:'Session Closed' };
-  const subs    = { lobby:'Waiting for participants to connect', investing:`Years ${(r-1)*ROUND_YEARS+1}–${r*ROUND_YEARS}`, revealing:'Market returns are now visible', round_results:'Participants are reviewing results', gameover:'30-year simulation completed' };
-  const chips   = { lobby:'chip-lobby', investing:'chip-investing', revealing:'chip-revealing', round_results:'chip-results', gameover:'chip-gameover' };
-  const labels  = { lobby:'Lobby', investing:'Active', revealing:'Published', round_results:'Statements', gameover:'Closed' };
-
-  document.getElementById('bar-title').textContent = titles[s] || s;
-  document.getElementById('bar-sub').textContent   = subs[s]   || '';
-  const chip = document.getElementById('bar-chip');
-  chip.className = 'chip ' + (chips[s] || 'chip-lobby');
-  chip.textContent = labels[s] || s;
+  const titles = {
+    lobby: "Session Lobby",
+    character_reveal: "Character Assignment",
+    investing: `Period ${r}/${TOTAL_ROUNDS}`,
+    revealing: `Period ${r} Published`,
+    round_results: `Period ${r} Statements`,
+    gameover: "Session Closed"
+  };
+  const subs = {
+    lobby: "Waiting for participants to connect",
+    character_reveal: "Profiles are being assigned",
+    investing: `Years ${(r - 1) * ROUND_YEARS + 1} - ${r * ROUND_YEARS}`,
+    revealing: "Market returns are visible to participants",
+    round_results: "Participants are reviewing their results",
+    gameover: "Simulation has ended"
+  };
+  const labels = {
+    lobby: "Lobby",
+    character_reveal: "Setup",
+    investing: "Active",
+    revealing: "Published",
+    round_results: "Review",
+    gameover: "Closed"
+  };
+  document.getElementById("bar-title").textContent = titles[s] || s;
+  document.getElementById("bar-sub").textContent = subs[s] || "";
+  document.getElementById("bar-chip").textContent = labels[s] || s;
 }
 
-// ── LOBBY ─────────────────────────────────────────────────────
-function renderLobby() {
-  const playerUrl = `${location.origin}/player.html?code=${gameCode}`;
-  document.getElementById('main-content').innerHTML = `
-    <div class="qr-row">
-      <div class="qr-box" id="qr-box"></div>
-      <div class="qr-info">
-        <h3>Participants: scan to access</h3>
-        <p>Or open the link below and enter the access code.<br>Minimum 1 participant required to start.</p>
-        <div class="url-box">${playerUrl}</div>
+function renderKpis(rows) {
+  const joined = rows.length;
+  const marketValue = rows.reduce((sum, r) => sum + r.wealth, 0);
+  const avgTax = joined ? rows.reduce((sum, r) => sum + (r.p.totalTaxPaid || 0), 0) / joined : 0;
+  const submitted = rows.filter(r => r.p.submitted).length;
+  return `
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Total Market Value</div><div class="kpi-value">${fmtEuro(marketValue)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Average Tax Paid</div><div class="kpi-value">${fmtEuro(avgTax)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Active Period</div><div class="kpi-value">${gameState.meta.round}/${TOTAL_ROUNDS}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Submitted Orders</div><div class="kpi-value">${submitted}/${joined}</div></div>
+    </div>
+  `;
+}
+
+function renderCharts(rows) {
+  return `
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-title">Net worth trend by participant</div>
+        <div class="chart-wrap">${drawTrendChart(rows)}</div>
+        <div class="legend">${rows.map(r => `<span class="legend-item"><span class="legend-dot" style="background:${r.c.color}"></span>${r.c.name}</span>`).join("")}</div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Cash balance live</div>
+        <div class="chart-wrap small">${drawHorizontalBars(rows, "cash")}</div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Tax paid ranking</div>
+        <div class="chart-wrap small">${drawHorizontalBars(rows, "tax")}</div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Turn performance delta</div>
+        <div class="chart-wrap small">${drawTurnHeatmap(rows)}</div>
       </div>
     </div>
-    <div id="lobby-table"></div>`;
-  // QR code via Google Charts (no library needed)
-  const qr = document.getElementById('qr-box');
-  qr.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(playerUrl)}" width="140" height="140" alt="QR">`;
-  renderLobbyTable();
+  `;
+}
+
+function drawTrendChart(rows) {
+  if (!rows.length) return "<svg></svg>";
+  const round = gameState.meta.round;
+  const points = [];
+  rows.forEach(r => {
+    const entries = [];
+    for (let i = 1; i <= round; i += 1) {
+      const value = roundHistory[r.id]?.[i]?.wealth ?? null;
+      if (value !== null) entries.push({ x: i, y: value });
+    }
+    points.push({ color: r.c.color, entries });
+  });
+  const allY = points.flatMap(line => line.entries.map(p => p.y));
+  const minY = Math.min(...allY, 0);
+  const maxY = Math.max(...allY, 1);
+  const mapX = x => ((x - 1) / Math.max(round - 1, 1)) * 94 + 3;
+  const mapY = y => 94 - ((y - minY) / Math.max(maxY - minY, 1)) * 88;
+  const paths = points.map(line => {
+    const d = line.entries.map((p, i) => `${i === 0 ? "M" : "L"} ${mapX(p.x).toFixed(2)} ${mapY(p.y).toFixed(2)}`).join(" ");
+    return `<path d="${d}" fill="none" stroke="${line.color}" stroke-width="1.9" />`;
+  }).join("");
+  return `<svg viewBox="0 0 100 100" preserveAspectRatio="none"><rect x="0" y="0" width="100" height="100" fill="#fff"/><line x1="0" y1="94" x2="100" y2="94" stroke="#d9dedb" /><line x1="3" y1="0" x2="3" y2="100" stroke="#d9dedb" />${paths}</svg>`;
+}
+
+function drawHorizontalBars(rows, type) {
+  if (!rows.length) return "<svg></svg>";
+  const data = rows.map(r => ({
+    name: r.c.name,
+    color: r.c.color,
+    value: type === "cash" ? r.cash : (r.p.totalTaxPaid || 0)
+  })).sort((a, b) => b.value - a.value);
+  const max = Math.max(...data.map(d => d.value), 1);
+  const barHeight = 16;
+  const gap = 8;
+  const height = data.length * (barHeight + gap);
+  const bars = data.map((d, idx) => {
+    const y = idx * (barHeight + gap);
+    const w = Math.max(4, (d.value / max) * 68);
+    return `<text x="0" y="${y + 11}" font-size="8" fill="#5d6f64">${d.name}</text><rect x="28" y="${y}" width="${w}" height="${barHeight}" fill="${d.color}" rx="2"></rect><text x="${Math.min(98, 30 + w)}" y="${y + 11}" font-size="8" fill="#102117">${fmtEuro(d.value, true)}</text>`;
+  }).join("");
+  return `<svg viewBox="0 0 100 ${height}" preserveAspectRatio="none">${bars}</svg>`;
+}
+
+function drawTurnHeatmap(rows) {
+  if (!rows.length) return "<svg></svg>";
+  const round = gameState.meta.round;
+  const cells = [];
+  const cellW = 100 / Math.max(round, 1);
+  const cellH = 100 / rows.length;
+  rows.forEach((r, rowIdx) => {
+    for (let col = 1; col <= round; col += 1) {
+      const curr = roundHistory[r.id]?.[col]?.wealth;
+      const prev = roundHistory[r.id]?.[col - 1]?.wealth;
+      const delta = curr && prev ? curr - prev : 0;
+      const fill = delta > 0 ? "#007a46" : delta < 0 ? "#b4232d" : "#e8ecea";
+      cells.push(`<rect x="${(col - 1) * cellW}" y="${rowIdx * cellH}" width="${cellW - .5}" height="${cellH - .5}" fill="${fill}" />`);
+    }
+  });
+  return `<svg viewBox="0 0 100 100" preserveAspectRatio="none">${cells.join("")}</svg>`;
+}
+
+function renderPlayerTable(rows) {
+  const maxW = Math.max(...rows.map(r => r.wealth), 1);
+  return `
+    <div class="table-card">
+      <table class="tbl">
+        <thead><tr><th>Player</th><th>Cash</th><th>Portfolio</th><th>Total Wealth</th><th>Tax Paid</th><th>Position</th><th>Submitted</th></tr></thead>
+        <tbody>
+        ${rows.map(({ c, p, wealth, portVal }) => `
+          <tr>
+            <td><div class="char-cell"><span class="c-emoji">${c.emoji}</span><div><div class="c-name" style="color:${c.color}">${c.name}</div><div class="c-job">${c.job}</div></div></div></td>
+            <td class="val-big">${fmtEuro(p.cash)}</td>
+            <td class="val-big">${fmtEuro(portVal)}</td>
+            <td class="val-big" style="color:${c.color}">${fmtEuro(wealth)}</td>
+            <td class="val-tax">${p.totalTaxPaid > 0 ? "-" + fmtEuro(p.totalTaxPaid) : "€0"}</td>
+            <td><div class="bar-wrap"><div class="bar-fill" style="width:${Math.max(6, wealth / maxW * 100)}%;background:${c.color}"></div></div></td>
+            <td><span class="tag-submitted ${p.submitted ? "sub-yes" : "sub-no"}">${p.submitted ? "Submitted" : "Open"}</span></td>
+          </tr>
+        `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderRoundPerformance(rows) {
+  const round = gameState.meta.round;
+  const prices = gameState.prices?.[round];
+  const pricesHtml = Object.entries(ASSETS).map(([ticker, asset]) => {
+    const mult = prices?.[ticker];
+    const pct = typeof mult === "number" ? ((mult - 1) * 100) : null;
+    return `<div class="price-card"><span class="pc-emoji">${asset.emoji}</span><div><div class="pc-name">${asset.name}</div><div class="pc-ticker">${ticker}</div></div>${pct === null ? `<div class="hidden-price">Hidden</div>` : `<div class="pc-ret ${pct >= 0 ? "positive" : "negative"}">${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%</div>`}</div>`;
+  }).join("");
+  return `<div class="prices-card"><div class="section-title">${prices ? "Market Returns (live)" : "Market Returns (hidden)"}</div><div class="prices-grid">${pricesHtml}</div></div>`;
+}
+
+function renderLobby() {
+  const playerUrl = `${location.origin}/player.html?code=${gameCode}`;
+  const rows = getRows();
+  document.getElementById("main-content").innerHTML = `
+    ${renderKpis(rows)}
+    <div class="qr-card">
+      <div class="qr-row">
+        <div class="qr-box" id="qr-box"></div>
+        <div class="qr-info">
+          <h3>Participant access</h3>
+          <p>Scan this QR code in class or send the link below. Participants can join with the session code.</p>
+          <div class="url-box">${playerUrl}</div>
+        </div>
+      </div>
+    </div>
+    <div id="lobby-table" style="margin-top:12px"></div>
+  `;
+  document.getElementById("qr-box").innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(playerUrl)}" width="140" height="140" alt="QR">`;
 }
 
 function renderLobbyTable() {
-  const wrap = document.getElementById('lobby-table');
+  const wrap = document.getElementById("lobby-table");
   if (!wrap) return;
-  const players = gameState?.players || {};
+  const players = gameState.players || {};
   wrap.innerHTML = `
-    <table class="tbl">
-      <thead><tr>
-        <th>Character</th><th>Starting budget</th><th>Tax structure</th><th>Status</th>
-      </tr></thead>
-      <tbody>${CHAR_ORDER.map(id => {
-        const c = CHARACTERS[id]; const p = players[id];
-        return `<tr>
-          <td><div class="char-cell"><span class="c-emoji">${c.emoji}</span><div>
-            <div class="c-name" style="color:${c.color}">${c.name}</div>
-            <div class="c-job">${c.job}</div>
-          </div></div></td>
-          <td class="val-big">${fmtEuro(c.startingCash)}</td>
-          <td style="font-size:12px;color:${c.taxType==='company'?'#22c55e':'#ef4444'}">${c.taxType==='company'?'0% — holding company':'10% capital gains tax'}</td>
-          <td><span class="tag-submitted ${p?'sub-yes':'sub-no'}">${p?'✓ Joined':'Waiting'}</span></td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table>`;
+    <div class="table-card">
+      <table class="tbl">
+        <thead><tr><th>Character</th><th>Starting Budget</th><th>Tax Structure</th><th>Status</th></tr></thead>
+        <tbody>
+          ${CHAR_ORDER.map(id => {
+            const c = CHARACTERS[id];
+            const p = players[id];
+            return `<tr>
+              <td><div class="char-cell"><span class="c-emoji">${c.emoji}</span><div><div class="c-name" style="color:${c.color}">${c.name}</div><div class="c-job">${c.job}</div></div></div></td>
+              <td class="val-big">${fmtEuro(c.startingCash)}</td>
+              <td class="val-big" style="color:${c.taxType === "company" ? "var(--brand)" : "var(--danger)"}">${c.taxType === "company" ? "0% Holding company" : "10% Capital gains tax"}</td>
+              <td><span class="tag-submitted ${p ? "sub-yes" : "sub-no"}">${p ? "Joined" : "Waiting"}</span></td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
-// ── ROUND CONTENT ─────────────────────────────────────────────
 function renderRound() {
-  const round  = gameState.meta.round;
-  const prices = gameState.prices?.[round] || null;
-  const players = gameState.players || {};
-
-  const rows = CHAR_ORDER.filter(id => players[id]).map(id => {
-    const c = CHARACTERS[id]; const p = players[id];
-    const portVal = portfolioValue(p.portfolio, prices || {});
-    return { id, c, p, wealth: p.cash + portVal, portVal };
-  });
-  const maxW = Math.max(...rows.map(r=>r.wealth), 1);
-
-  document.getElementById('main-content').innerHTML = `
-    <table class="tbl" style="margin-bottom:20px">
-      <thead><tr>
-        <th>Player</th><th>Cash</th><th>Portfolio</th><th>Total Wealth</th><th>Tax Paid</th><th>Bar</th><th>Submitted</th>
-      </tr></thead>
-      <tbody id="wealth-body"></tbody>
-    </table>
-    <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#444;margin-bottom:10px">
-      ${prices ? 'Market Returns — ' + ROUND_YEARS + ' years' : 'Returns are hidden until publication'}
-    </div>
-    <div class="prices-grid" id="prices-grid"></div>`;
-
-  const tbody = document.getElementById('wealth-body');
-  rows.forEach(({ c, p, wealth, portVal }) => {
-    const pct = (wealth / maxW * 100).toFixed(0);
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><div class="char-cell"><span class="c-emoji">${c.emoji}</span><div>
-        <div class="c-name" style="color:${c.color}">${c.name}</div>
-        <div class="c-job">${c.job}</div>
-      </div></div></td>
-      <td class="val-big">${fmtEuro(p.cash)}</td>
-      <td class="val-big">${prices ? fmtEuro(portVal) : fmtEuro(Object.values(p.portfolio||{}).reduce((s,x)=>s+x.cost,0))}</td>
-      <td style="font-size:16px;font-weight:800;color:${c.color}">${fmtEuro(wealth)}</td>
-      <td class="val-tax">${p.totalTaxPaid>0?'-'+fmtEuro(p.totalTaxPaid):c.taxType==='company'?'€0 🟢':'€0'}</td>
-      <td><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${c.color}"></div></div></td>
-      <td><span class="tag-submitted ${p.submitted?'sub-yes':'sub-no'}">${p.submitted?'✓':'…'}</span></td>`;
-    tbody.appendChild(tr);
-  });
-
-  const grid = document.getElementById('prices-grid');
-  for (const [ticker, asset] of Object.entries(ASSETS)) {
-    const mult = prices?.[ticker];
-    const pct  = mult ? ((mult-1)*100) : null;
-    const card = document.createElement('div');
-    card.className = 'price-card';
-    card.innerHTML = `
-      <span class="pc-emoji">${asset.emoji}</span>
-      <div><div class="pc-name">${asset.name}</div><div class="pc-ticker">${ticker}</div></div>
-      ${pct !== null
-        ? `<div class="pc-ret ${pct>=0?'positive':'negative'}">${pct>=0?'+':''}${pct.toFixed(1)}%</div>`
-        : `<div class="hidden-price">Hidden</div>`}`;
-    grid.appendChild(card);
-  }
+  const rows = getRows();
+  document.getElementById("main-content").innerHTML = `
+    ${renderKpis(rows)}
+    ${renderCharts(rows)}
+    ${renderPlayerTable(rows)}
+    <div style="margin-top:12px">${renderRoundPerformance(rows)}</div>
+  `;
 }
 
-// ── FINAL ─────────────────────────────────────────────────────
 function renderFinal() {
-  const players = gameState.players || {};
-  const sorted  = CHAR_ORDER.filter(id=>players[id])
-    .map(id => ({ id, c:CHARACTERS[id], p:players[id] }))
-    .sort((a,b) => b.p.totalWealth - a.p.totalWealth);
-
-  const willy = sorted.find(x=>x.id==='willy');
-  const mj    = sorted.find(x=>x.id==='mariejeanne');
-  const totalTax = sorted.reduce((s,x)=>s+(x.p.totalTaxPaid||0), 0);
-
-  document.getElementById('main-content').innerHTML = `
-    <div class="final-lb">
-      ${sorted.map(({id,c,p},i)=>`
-        <div class="lb-row ${i===0?'r1':''}">
-          <div class="lb-rank">#${i+1}</div>
-          <div class="lb-emoji">${c.emoji}</div>
-          <div class="lb-info"><div class="lb-name" style="color:${c.color}">${c.name}</div><div class="lb-job">${c.job} · ${c.taxType==='company'?'0% tax':'10% tax'}</div></div>
-          <div class="lb-money">
-            <div class="lb-wealth" style="color:${c.color}">${fmtEuro(p.totalWealth)}</div>
-            <div class="lb-tax ${c.taxType==='company'?'positive':'negative'}">${c.taxType==='company'?'€0 tax 🟢':'-'+fmtEuro(p.totalTaxPaid)+' tax'}</div>
+  const rows = getRows().sort((a, b) => b.wealth - a.wealth);
+  const totalTax = rows.reduce((sum, row) => sum + (row.p.totalTaxPaid || 0), 0);
+  document.getElementById("main-content").innerHTML = `
+    ${renderKpis(rows)}
+    ${renderCharts(rows)}
+    <div class="final-card">
+      <div class="section-title">Final leaderboard</div>
+      <div class="final-lb">
+        ${rows.map((row, index) => `
+          <div class="lb-row ${index === 0 ? "r1" : ""}">
+            <div class="lb-rank">#${index + 1}</div>
+            <div class="lb-emoji">${row.c.emoji}</div>
+            <div class="lb-info"><div class="lb-name" style="color:${row.c.color}">${row.c.name}</div><div class="lb-job">${row.c.job}</div></div>
+            <div class="lb-money"><div class="lb-wealth">${fmtEuro(row.wealth)}</div><div class="lb-tax">${row.p.totalTaxPaid > 0 ? "-" + fmtEuro(row.p.totalTaxPaid) : "€0 tax"}</div></div>
           </div>
-        </div>`).join('')}
-    </div>
-    <div class="conclusion">
-      <div class="conc-title">📊 Key Takeaways</div>
-      <div class="conc-text">
-        ${willy&&mj?`<strong style="color:#eab308">Willy vs. Marie-Jeanne:</strong> Same starting wealth of ${fmtEuro(180_000_000)}.
-        Willy ended at <strong style="color:#a855f7">${fmtEuro(willy.p.totalWealth)}</strong> — paid €0 tax.
-        Marie-Jeanne ended at <strong style="color:#06b6d4">${fmtEuro(mj.p.totalWealth)}</strong> — paid <strong style="color:#ef4444">${fmtEuro(mj.p.totalTaxPaid)}</strong> in tax.<br><br>`:''}
-        <strong>Total capital gains tax collected:</strong> ${fmtEuro(totalTax)}<br><br>
-        <strong>Conclusion:</strong> The 2025 Belgian capital gains tax hits personal investors hardest.
-        Wealthy individuals with holding companies (like Willy) legally pay 0%.
-        The wealth gap widens every single round — not because of different investment performance, but because of tax structure.
+        `).join("")}
       </div>
-    </div>`;
+      <div class="conclusion">
+        <div class="conc-title">Outcome analysis</div>
+        <div class="conc-text">Total tax collected: <strong>${fmtEuro(totalTax)}</strong>. The dashboard highlights that portfolio strategy and tax structure both shape long-term net wealth.</div>
+      </div>
+    </div>
+  `;
 }
 
-// ── BUTTON HANDLERS ───────────────────────────────────────────
-document.getElementById('ctrl-start').addEventListener('click', () =>
-  socket.emit('host_action', { code: gameCode, action: 'start_round' }));
+document.getElementById("ctrl-start").addEventListener("click", () => socket.emit("host_action", { code: gameCode, action: "start_round" }));
+document.getElementById("ctrl-reveal").addEventListener("click", () => socket.emit("host_action", { code: gameCode, action: "reveal_prices" }));
+document.getElementById("ctrl-next").addEventListener("click", () => socket.emit("host_action", { code: gameCode, action: "next_round" }));
+document.getElementById("ctrl-end").addEventListener("click", () => socket.emit("host_action", { code: gameCode, action: "end_game" }));
 
-document.getElementById('ctrl-reveal').addEventListener('click', () =>
-  socket.emit('host_action', { code: gameCode, action: 'reveal_prices' }));
-
-document.getElementById('ctrl-next').addEventListener('click', () =>
-  socket.emit('host_action', { code: gameCode, action: 'next_round' }));
-
-document.getElementById('ctrl-end').addEventListener('click', () =>
-  socket.emit('host_action', { code: gameCode, action: 'end_game' }));
+function fmtEuro(value, compact = false) {
+  const amount = Number(value || 0);
+  if (compact && Math.abs(amount) >= 1_000_000) return `€${(amount / 1_000_000).toFixed(1)}M`;
+  if (compact && Math.abs(amount) >= 1_000) return `€${(amount / 1_000).toFixed(0)}k`;
+  return new Intl.NumberFormat("nl-BE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(amount);
+}
 </script>
 </body>
 </html>

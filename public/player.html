@@ -108,6 +108,7 @@ input{font-family:inherit;color:#f0f0f0}
 .a-invested{font-size:11px;color:#555;margin-top:2px}
 .btn-buy{background:#0a2a0a;color:#22c55e;border:1px solid #22c55e30;padding:7px 14px;border-radius:10px;font-size:12px;font-weight:700}
 .btn-sell{background:#2a0a0a;color:#ef4444;border:1px solid #ef444430;padding:7px 14px;border-radius:10px;font-size:12px;font-weight:700}
+.asset-actions{display:flex;gap:6px;align-items:center}
 
 /* portfolio tab */
 .empty-state{padding:40px 20px;text-align:center;color:#444;font-size:14px;line-height:1.6}
@@ -197,6 +198,10 @@ input{font-family:inherit;color:#f0f0f0}
 .amt-input{width:100%;background:#111;border:1.5px solid #2a2a2a;padding:15px 15px 15px 34px;
   border-radius:14px;font-size:22px;font-weight:700;outline:none;transition:border-color .2s}
 .amt-input:focus{border-color:#a855f7}
+.slider-wrap{margin:0 0 14px}
+.slider-top{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#666;margin-bottom:6px}
+.slider-val{font-weight:700;color:#16a34a}
+.amt-slider{width:100%;accent-color:#16a34a}
 .quick{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
 .quick-btn{background:#111;border:1px solid #2a2a2a;color:#aaa;padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600}
 .tax-preview{background:#130808;border:1px solid #ef444420;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:none}
@@ -633,6 +638,13 @@ html,body{
       <span class="amt-prefix">€</span>
       <input class="amt-input" id="m-amount" type="number" min="0" placeholder="0" inputmode="numeric">
     </div>
+    <div class="slider-wrap">
+      <div class="slider-top">
+        <span id="m-slider-label">Gebruik slider</span>
+        <span class="slider-val" id="m-slider-val">0%</span>
+      </div>
+      <input class="amt-slider" id="m-slider" type="range" min="0" max="100" step="1" value="0">
+    </div>
     <div class="quick" id="m-quick"></div>
     <div class="tax-preview" id="m-tax-preview">
       <div class="tp-lbl">Estimated capital gains tax</div>
@@ -658,6 +670,8 @@ let gameState = null;
 let pendingOrders = {}; // { NVDA: { type:'buy'|'sell', amount:5000 } }
 let modalTicker = null;
 let modalMode   = 'buy';
+let modalMaxAmount = 0;
+let joinInFlight = false;
 
 // ── screen helper ────────────────────────────────────────────
 function show(id) {
@@ -670,15 +684,18 @@ document.getElementById('btn-join').addEventListener('click', doJoin);
 document.getElementById('inp-code').addEventListener('keydown', e => { if (e.key==='Enter') doJoin(); });
 
 function doJoin() {
+  if (joinInFlight) return;
   const code = document.getElementById('inp-code').value.trim().toUpperCase();
   const err  = document.getElementById('join-error');
   err.textContent = '';
   if (code.length < 3) { err.textContent = 'Enter the game code from the board.'; return; }
   const btn = document.getElementById('btn-join');
+  joinInFlight = true;
   btn.disabled = true; btn.textContent = 'Connecting…';
   socket.emit('join_game', { code }, (res) => {
+    joinInFlight = false;
     if (res.error) {
-      err.textContent = res.error;
+      err.textContent = normalizeJoinError(res.error);
       btn.disabled = false; btn.textContent = 'Access Session'; return;
     }
     myCode   = code;
@@ -690,8 +707,31 @@ function doJoin() {
   });
 }
 
+function normalizeJoinError(msg) {
+  const text = String(msg || '');
+  const lower = text.toLowerCase();
+  if (lower.includes('game not found')) {
+    return 'Session nog niet beschikbaar. Wacht 2 seconden en probeer opnieuw.';
+  }
+  if (lower.includes('timeout') || lower.includes('network')) {
+    return 'Verbinding tijdelijk traag. Probeer opnieuw.';
+  }
+  return text || 'Kon niet verbinden met de sessie.';
+}
+
 // ── server pushes ────────────────────────────────────────────
 socket.on('game_update', state => {
+  if (state?.meta?.connectionError) {
+    const err = document.getElementById('join-error');
+    if (document.getElementById('s-join').classList.contains('active')) {
+      err.textContent = normalizeJoinError(state.meta.connectionError);
+      const btn = document.getElementById('btn-join');
+      btn.disabled = false;
+      btn.textContent = 'Access Session';
+      joinInFlight = false;
+    }
+    return;
+  }
   gameState = state;
   syncScreen();
 });
@@ -772,12 +812,25 @@ function renderApp() {
   const wEl = document.getElementById('app-wealth');
   wEl.textContent = fmtEuro(total);
   wEl.style.color = c.color;
-  document.getElementById('app-cash').textContent = fmtEuro(me.cash);
+  document.getElementById('app-cash').textContent = fmtEuro(getAvailableBuyCash(me));
 
   renderMarkets(me, round, prices);
   renderPortfolio(me, prices);
   renderTax(me, prices);
   updateSubmitBtn(me);
+}
+
+function getPendingBuyTotal(excludeTicker = null) {
+  return Object.entries(pendingOrders).reduce((sum, [ticker, order]) => {
+    if (order?.type !== 'buy') return sum;
+    if (excludeTicker && ticker === excludeTicker) return sum;
+    return sum + (Number(order.amount) || 0);
+  }, 0);
+}
+
+function getAvailableBuyCash(player, excludeTicker = null) {
+  const reserved = getPendingBuyTotal(excludeTicker);
+  return Math.max(0, (Number(player?.cash) || 0) - reserved);
 }
 
 function renderMarkets(me, round, prices) {
@@ -815,9 +868,10 @@ function renderMarkets(me, round, prices) {
         ${pendingBadge}
       </div>
       <div class="a-right">${retHTML}</div>
-      ${canSell && posAmt > 0
-        ? `<button class="btn-sell" onclick="openModal('${ticker}','sell')">Sell</button>`
-        : `<button class="btn-buy" onclick="openModal('${ticker}','buy')">Buy</button>`}`;
+      <div class="asset-actions">
+        <button class="btn-buy" onclick="openModal('${ticker}','buy')">Buy</button>
+        ${canSell && posAmt > 0 ? `<button class="btn-sell" onclick="openModal('${ticker}','sell')">Sell</button>` : ''}
+      </div>`;
     container.appendChild(row);
   }
 }
@@ -927,6 +981,9 @@ function openModal(ticker, mode) {
   document.getElementById('m-title').textContent = (mode==='buy'?'Buy ':'Sell ') + a.name;
   document.getElementById('m-sub').textContent   = ticker + ' · ' + a.type.charAt(0).toUpperCase() + a.type.slice(1);
   document.getElementById('m-amount').value = '';
+  document.getElementById('m-slider').value = 0;
+  document.getElementById('m-slider-val').textContent = '0%';
+  document.getElementById('m-slider-label').textContent = mode === 'buy' ? 'Percentage van cash' : 'Percentage van positie';
 
   const btn = document.getElementById('m-confirm');
   btn.className = 'btn-confirm ' + (mode==='buy' ? 'buy-mode' : 'sell-mode');
@@ -934,13 +991,15 @@ function openModal(ticker, mode) {
   btn.disabled = true;
 
   if (mode === 'buy') {
+    modalMaxAmount = getAvailableBuyCash(me, ticker);
     document.getElementById('m-bal-lbl').textContent = 'Available cash';
-    document.getElementById('m-bal-val').textContent = fmtEuro(me.cash);
+    document.getElementById('m-bal-val').textContent = fmtEuro(modalMaxAmount);
     document.getElementById('m-pos-wrap').style.display = posAmt > 0 ? 'block' : 'none';
     document.getElementById('m-pos-val').textContent = fmtEuro(posAmt);
-    buildQuick([.25, .5, .75, 1].map(f => Math.floor(me.cash * f)));
+    buildQuick([.25, .5, .75, 1].map(f => Math.floor(modalMaxAmount * f)));
     document.getElementById('m-tax-preview').style.display = 'none';
   } else {
+    modalMaxAmount = posVal;
     document.getElementById('m-bal-lbl').textContent = 'Position value';
     document.getElementById('m-bal-val').textContent = fmtEuro(posVal);
     document.getElementById('m-pos-wrap').style.display = 'none';
@@ -958,7 +1017,8 @@ function openModal(ticker, mode) {
     }
   }
 
-  document.getElementById('m-amount').oninput = validateAmount;
+  document.getElementById('m-amount').oninput = onAmountInput;
+  document.getElementById('m-slider').oninput = onSliderInput;
   document.getElementById('modal').classList.add('open');
   setTimeout(() => document.getElementById('m-amount').focus(), 100);
 }
@@ -981,7 +1041,8 @@ function validateAmount() {
   const me  = gameState.players[myCharId];
   const btn = document.getElementById('m-confirm');
   if (modalMode === 'buy') {
-    btn.disabled = val <= 0 || val > me.cash;
+    const maxBuy = getAvailableBuyCash(me, modalTicker);
+    btn.disabled = val <= 0 || val > maxBuy;
   } else {
     const prices = gameState.prices?.[gameState.meta.round] || {};
     const pos    = me.portfolio?.[modalTicker];
@@ -990,16 +1051,40 @@ function validateAmount() {
   }
 }
 
+function onSliderInput() {
+  const pct = parseFloat(document.getElementById('m-slider').value) || 0;
+  const amount = Math.round((modalMaxAmount || 0) * (pct / 100));
+  document.getElementById('m-amount').value = amount > 0 ? amount : '';
+  document.getElementById('m-slider-val').textContent = `${Math.round(pct)}%`;
+  validateAmount();
+}
+
+function onAmountInput() {
+  const val = parseFloat(document.getElementById('m-amount').value) || 0;
+  const clamped = Math.max(0, Math.min(val, modalMaxAmount || 0));
+  if (clamped !== val) document.getElementById('m-amount').value = clamped > 0 ? Math.round(clamped) : '';
+  const pct = (modalMaxAmount || 0) > 0 ? (clamped / modalMaxAmount) * 100 : 0;
+  document.getElementById('m-slider').value = Math.max(0, Math.min(100, pct));
+  document.getElementById('m-slider-val').textContent = `${Math.round(pct)}%`;
+  validateAmount();
+}
+
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
 
 function confirmTrade() {
   const amount = parseFloat(document.getElementById('m-amount').value) || 0;
   if (amount <= 0) return;
+  const me = gameState.players[myCharId];
+  if (modalMode === 'buy') {
+    const maxBuy = getAvailableBuyCash(me, modalTicker);
+    if (amount > maxBuy) {
+      alert('Niet genoeg cash beschikbaar voor deze aankoop.');
+      return;
+    }
+  }
   pendingOrders[modalTicker] = { type: modalMode, amount };
   closeModal();
-  const me = gameState.players[myCharId];
-  renderMarkets(me, gameState.meta.round, gameState.prices?.[gameState.meta.round] || null);
-  updateSubmitBtn(me);
+  renderApp();
 }
 
 // ── SUBMIT ───────────────────────────────────────────────────
