@@ -233,15 +233,116 @@ html,body{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,s
   border:1px solid var(--line) !important;
   border-radius:8px !important;
 }
+
+/* ── FINTRO-STYLE PREMIUM REBUILD ── */
+:root{
+  --bank-bg:#f2f5f3;
+  --bank-surface:#ffffff;
+  --bank-surface-2:#f7faf8;
+  --bank-border:#d6e0da;
+  --bank-border-soft:#e6ede9;
+  --bank-text:#10251b;
+  --bank-muted:#60776b;
+  --bank-brand:#007a46;
+  --bank-brand-dark:#00663b;
+}
+html,body{
+  background:var(--bank-bg) !important;
+  color:var(--bank-text) !important;
+  letter-spacing:.001em;
+}
+.screen{background:var(--bank-bg) !important}
+
+#s-setup{
+  background:radial-gradient(ellipse at 50% 0%,#e6f3ed,#f2f5f3 70%) !important;
+}
+.setup-logo{
+  width:78px;
+  height:78px;
+  border-radius:20px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(180deg,#008a4f,#00673b);
+  color:#fff;
+  font-size:26px;
+  font-weight:800;
+  box-shadow:0 12px 26px rgba(0,122,70,.18);
+}
+.setup-title{font-size:32px !important}
+.setup-sub{
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-size:12px !important;
+}
+.btn-create,.ctrl-btn.btn-start,.ctrl-btn.btn-next{
+  background:var(--bank-brand) !important;
+  border-color:var(--bank-brand) !important;
+  color:#fff !important;
+}
+.btn-create:hover,.ctrl-btn.btn-start:hover,.ctrl-btn.btn-next:hover{
+  background:var(--bank-brand-dark) !important;
+  border-color:var(--bank-brand-dark) !important;
+}
+
+#s-host{
+  gap:12px;
+  padding:12px;
+}
+.sidebar{
+  margin:0 !important;
+  height:auto !important;
+  border:1px solid var(--bank-border) !important;
+  border-radius:14px !important;
+  background:var(--bank-surface) !important;
+}
+.main{
+  margin:0 !important;
+  border:1px solid var(--bank-border) !important;
+  border-radius:14px !important;
+  background:var(--bank-surface) !important;
+}
+.main-bar,.sb-head,.sb-controls{
+  background:var(--bank-surface) !important;
+}
+.sb-player,.tbl td{
+  border-bottom:1px solid var(--bank-border-soft) !important;
+}
+.sb-code{
+  font-size:30px !important;
+  color:var(--bank-brand) !important;
+}
+.main-bar-title{
+  font-size:18px !important;
+  font-weight:700 !important;
+}
+.main-bar-sub,.sb-status,.sb-job,.pc-ticker,.c-job,.lb-job,.conc-text{
+  color:var(--bank-muted) !important;
+}
+.chip{
+  background:var(--bank-surface-2) !important;
+  border:1px solid var(--bank-border) !important;
+}
+.tbl tr:hover td{background:#f5faf7 !important}
+.price-card,.lb-row,.conclusion,.qr-box{
+  border:1px solid var(--bank-border) !important;
+  border-radius:12px !important;
+  box-shadow:0 1px 2px rgba(16,40,29,.04) !important;
+}
+.url-box{
+  background:var(--bank-surface-2) !important;
+  color:var(--bank-brand) !important;
+}
+.positive{color:var(--bank-brand) !important}
+.a-emoji,.pc-emoji,.lb-emoji,.c-emoji,.sb-emoji{filter:saturate(.65)}
 </style>
 </head>
 <body>
 
 <!-- SETUP -->
 <div class="screen active" id="s-setup">
-  <div class="setup-logo">💰</div>
-  <div><div class="setup-title">Tax Wars</div><div class="setup-sub">Host dashboard · Capital gains tax simulation</div></div>
-  <button class="btn-create" id="btn-create">Create New Game</button>
+  <div class="setup-logo">TW</div>
+  <div><div class="setup-title">Tax Wars</div><div class="setup-sub">Control desk · Portfolio tax simulation</div></div>
+  <button class="btn-create" id="btn-create">Open New Session</button>
 </div>
 
 <!-- HOST -->
@@ -250,19 +351,19 @@ html,body{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,s
     <div class="sb-head">
       <div class="sb-code-lbl">Game Code</div>
       <div class="sb-code" id="sb-code">—</div>
-      <div class="sb-status" id="sb-status">Waiting for players</div>
+      <div class="sb-status" id="sb-status">Waiting for participants</div>
     </div>
     <div class="sb-players" id="sb-players"></div>
     <div class="sb-controls">
-      <button class="ctrl-btn btn-start"  id="ctrl-start"  disabled>▶ Start Round 1</button>
-      <button class="ctrl-btn btn-reveal" id="ctrl-reveal" disabled>👁 Reveal Prices</button>
-      <button class="ctrl-btn btn-next"   id="ctrl-next"   disabled>→ Next Round</button>
-      <button class="ctrl-btn btn-end"    id="ctrl-end"    disabled>⏹ End Game</button>
+      <button class="ctrl-btn btn-start"  id="ctrl-start"  disabled>Start Period 1</button>
+      <button class="ctrl-btn btn-reveal" id="ctrl-reveal" disabled>Publish Market Results</button>
+      <button class="ctrl-btn btn-next"   id="ctrl-next"   disabled>Open Next Period</button>
+      <button class="ctrl-btn btn-end"    id="ctrl-end"    disabled>Close Session</button>
     </div>
   </div>
   <div class="main">
     <div class="main-bar">
-      <div><div class="main-bar-title" id="bar-title">Lobby</div><div class="main-bar-sub" id="bar-sub">Waiting for players to join</div></div>
+      <div><div class="main-bar-title" id="bar-title">Session Lobby</div><div class="main-bar-sub" id="bar-sub">Waiting for participants to connect</div></div>
       <div class="chip chip-lobby" id="bar-chip">Lobby</div>
     </div>
     <div class="main-content" id="main-content"></div>
@@ -305,7 +406,7 @@ function subscribeSidebar() { /* updates come via game_update */ }
 // ── SIDEBAR ───────────────────────────────────────────────────
 function updateSidebar() {
   const statusMap = {
-    lobby:'Waiting for players', investing:'Round in progress',
+    lobby:'Waiting for participants', investing:'Investment period active',
     revealing:'Prices revealed', round_results:'Showing results', gameover:'Game finished'
   };
   document.getElementById('sb-status').textContent = statusMap[gameState.meta.status] || gameState.meta.status;
@@ -340,9 +441,9 @@ function updateButtons() {
   const end    = document.getElementById('ctrl-end');
 
   start.disabled  = !(s === 'lobby' && joined >= 1);
-  start.textContent = `▶ Start Round ${r}`;
+  start.textContent = `Start Period ${r}`;
   reveal.disabled = s !== 'investing';
-  reveal.textContent = `👁 Reveal Prices (${subm}/${joined})`;
+  reveal.textContent = `Publish Results (${subm}/${joined})`;
   next.disabled   = s !== 'revealing';
   end.disabled    = !(s === 'revealing' && r >= TOTAL_ROUNDS);
 }
@@ -350,10 +451,10 @@ function updateButtons() {
 function updateBar() {
   const s = gameState.meta.status;
   const r = gameState.meta.round;
-  const titles  = { lobby:'Lobby', investing:`Round ${r} / ${TOTAL_ROUNDS}`, revealing:`Round ${r} — Prices Revealed`, round_results:`Round ${r} — Results`, gameover:'Game Over' };
-  const subs    = { lobby:'Waiting for players to join', investing:`Years ${(r-1)*ROUND_YEARS+1}–${r*ROUND_YEARS}`, revealing:'Market results are in', round_results:'Players viewing results', gameover:'30 years simulated' };
+  const titles  = { lobby:'Session Lobby', investing:`Period ${r} / ${TOTAL_ROUNDS}`, revealing:`Period ${r} — Results Published`, round_results:`Period ${r} — Statements`, gameover:'Session Closed' };
+  const subs    = { lobby:'Waiting for participants to connect', investing:`Years ${(r-1)*ROUND_YEARS+1}–${r*ROUND_YEARS}`, revealing:'Market returns are now visible', round_results:'Participants are reviewing results', gameover:'30-year simulation completed' };
   const chips   = { lobby:'chip-lobby', investing:'chip-investing', revealing:'chip-revealing', round_results:'chip-results', gameover:'chip-gameover' };
-  const labels  = { lobby:'Lobby', investing:'Investing', revealing:'Revealed', round_results:'Results', gameover:'Game Over' };
+  const labels  = { lobby:'Lobby', investing:'Active', revealing:'Published', round_results:'Statements', gameover:'Closed' };
 
   document.getElementById('bar-title').textContent = titles[s] || s;
   document.getElementById('bar-sub').textContent   = subs[s]   || '';
@@ -369,8 +470,8 @@ function renderLobby() {
     <div class="qr-row">
       <div class="qr-box" id="qr-box"></div>
       <div class="qr-info">
-        <h3>Students: scan to join</h3>
-        <p>Or open the link below and type the game code.<br>Minimum 1 player to start (workshop: wait for all 6).</p>
+        <h3>Participants: scan to access</h3>
+        <p>Or open the link below and enter the access code.<br>Minimum 1 participant required to start.</p>
         <div class="url-box">${playerUrl}</div>
       </div>
     </div>
@@ -426,7 +527,7 @@ function renderRound() {
       <tbody id="wealth-body"></tbody>
     </table>
     <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#444;margin-bottom:10px">
-      ${prices ? 'Market Returns — ' + ROUND_YEARS + ' years' : 'Prices hidden until revealed'}
+      ${prices ? 'Market Returns — ' + ROUND_YEARS + ' years' : 'Returns are hidden until publication'}
     </div>
     <div class="prices-grid" id="prices-grid"></div>`;
 
