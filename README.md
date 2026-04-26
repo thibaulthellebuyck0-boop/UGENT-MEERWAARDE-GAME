@@ -105,3 +105,23 @@ If you want students to connect from home or via school WiFi without local netwo
 3. Share the public URL
 
 No env variables needed — the server runs as-is.
+
+---
+
+## Vercel deployment
+
+This repository is now Vercel-ready with serverless API endpoints:
+
+- `POST /api/game` for host/player actions
+- `GET /api/game?action=get_state&code=XXXXX` for polling updates
+
+Online URLs:
+
+- Host: `https://ugent-meerwaarde-game.vercel.app/host.html`
+- Player: `https://ugent-meerwaarde-game.vercel.app/player.html`
+
+For automatic preview deployments on every push:
+
+1. Connect your GitHub account as a Vercel Login Connection
+2. Run `vercel git connect https://github.com/thibaulthellebuyck0-boop/UGENT-MEERWAARDE-GAME`
+3. Push feature branches to GitHub
